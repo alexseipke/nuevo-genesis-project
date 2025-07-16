@@ -236,7 +236,7 @@ export function ControlPanel({ parameters, onParametersChange, validation, selec
                                     )}
                                   </div>
                                   {mission.available && (
-                                    <p className="text-xs text-muted-foreground/80 group-hover/mission:text-foreground/80 transition-colors duration-300 mt-1 leading-relaxed">
+                                    <p className="text-xs text-muted-foreground/80 group-hover/mission:text-foreground/80 transition-colors duration-300 mt-1 leading-relaxed break-words">
                                       {mission.id === 'orbita-inteligente' && 'Inspección orbital automatizada'}
                                       {mission.id === 'corredor-inteligente' && 'Mapeo lineal inteligente'}
                                       {mission.id === 'fachadas-pro' && 'Análisis detallado de fachadas'}

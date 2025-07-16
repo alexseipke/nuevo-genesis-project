@@ -1,4 +1,4 @@
-import { Plane, Download, ChevronDown } from 'lucide-react';
+import { Target, Download, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
@@ -16,7 +16,7 @@ export function PromoBanner({ onExportKMZ, onExportLitchi, canExport = false }: 
           {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-primary">
-              <Plane className="w-6 h-6 text-white" />
+              <Target className="w-6 h-6 text-white" />
             </div>
             <h1 className="text-xl font-bold text-foreground">Planner-Viizor</h1>
           </div>
