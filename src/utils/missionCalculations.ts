@@ -27,55 +27,46 @@ export function calculateCorridorWaypoints(params: MissionParameters): Waypoint[
   // Calcular número de bandas necesarias para cubrir el ancho del corredor
   const numStrips = Math.ceil(corridorWidth / effectiveStripWidth);
   
-  // Crear bandas paralelas al eje del corredor
+  // Crear bandas paralelas al eje del corredor con waypoints solo en quiebres
   const strips: Coordinates[][] = [];
   
   for (let stripIndex = 0; stripIndex < numStrips; stripIndex++) {
     // Calcular offset desde el centro del corredor
     const offsetFromCenter = (stripIndex - (numStrips - 1) / 2) * effectiveStripWidth;
     
-    // Crear puntos para esta banda
+    // Crear puntos para esta banda - solo en los vértices del corredor
     const stripPoints: Coordinates[] = [];
     
-    // Procesar cada segmento del eje del corredor
-    for (let i = 0; i < corridorPoints.length - 1; i++) {
-      const startPoint = corridorPoints[i];
-      const endPoint = corridorPoints[i + 1];
+    // Agregar waypoints solo en los puntos de quiebre (vértices del corredor)
+    for (let i = 0; i < corridorPoints.length; i++) {
+      const point = corridorPoints[i];
       
-      // Calcular el bearing del segmento
-      const bearing = calculateBearing(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
+      // Calcular el bearing promedio para este punto
+      let bearing = 0;
+      if (i === 0 && corridorPoints.length > 1) {
+        // Primer punto: usar bearing hacia el siguiente
+        bearing = calculateBearing(point.lat, point.lng, corridorPoints[i + 1].lat, corridorPoints[i + 1].lng);
+      } else if (i === corridorPoints.length - 1 && corridorPoints.length > 1) {
+        // Último punto: usar bearing del anterior
+        bearing = calculateBearing(corridorPoints[i - 1].lat, corridorPoints[i - 1].lng, point.lat, point.lng);
+      } else if (corridorPoints.length > 2) {
+        // Punto intermedio: promedio de bearing entrante y saliente
+        const bearingIn = calculateBearing(corridorPoints[i - 1].lat, corridorPoints[i - 1].lng, point.lat, point.lng);
+        const bearingOut = calculateBearing(point.lat, point.lng, corridorPoints[i + 1].lat, corridorPoints[i + 1].lng);
+        bearing = (bearingIn + bearingOut) / 2;
+      }
+      
       const perpendicularBearing = (bearing + 90) % 360;
       
-      // Calcular puntos del segmento con offset perpendicular
-      const offsetStart = moveCoordinate(startPoint.lat, startPoint.lng, perpendicularBearing, offsetFromCenter);
-      const offsetEnd = moveCoordinate(endPoint.lat, endPoint.lng, perpendicularBearing, offsetFromCenter);
-      
-      // Agregar punto inicial del segmento (solo si es el primer segmento o no es duplicado)
-      if (i === 0 || stripPoints.length === 0) {
-        stripPoints.push(offsetStart);
-      }
-      
-      // Calcular distancia del segmento
-      const segmentDistance = calculateDistance(offsetStart.lat, offsetStart.lng, offsetEnd.lat, offsetEnd.lng);
-      
-      // Calcular puntos intermedios si el segmento es largo
-      const numIntermediatePoints = Math.floor(segmentDistance / effectivePhotoDistance);
-      
-      for (let pointIndex = 1; pointIndex <= numIntermediatePoints; pointIndex++) {
-        const progress = pointIndex / (numIntermediatePoints + 1);
-        const intermediateLat = offsetStart.lat + (offsetEnd.lat - offsetStart.lat) * progress;
-        const intermediateLng = offsetStart.lng + (offsetEnd.lng - offsetStart.lng) * progress;
-        stripPoints.push({ lat: intermediateLat, lng: intermediateLng });
-      }
-      
-      // Agregar punto final del segmento
-      stripPoints.push(offsetEnd);
+      // Calcular punto con offset perpendicular
+      const offsetPoint = moveCoordinate(point.lat, point.lng, perpendicularBearing, offsetFromCenter);
+      stripPoints.push(offsetPoint);
     }
     
     strips.push(stripPoints);
   }
   
-  // Optimizar ruta: alternar dirección en bandas pares/impares (patrón serpentine)
+  // Crear waypoints con patrón serpentine optimizado
   for (let stripIndex = 0; stripIndex < strips.length; stripIndex++) {
     const strip = strips[stripIndex];
     const isEvenStrip = stripIndex % 2 === 0;
@@ -83,14 +74,63 @@ export function calculateCorridorWaypoints(params: MissionParameters): Waypoint[
     // Invertir dirección en bandas impares para crear patrón serpentine
     const orderedPoints = isEvenStrip ? strip : [...strip].reverse();
     
+    // Agregar waypoints de conexión entre bandas si es necesario
+    if (stripIndex > 0 && waypoints.length > 0) {
+      const lastWaypoint = waypoints[waypoints.length - 1];
+      const firstPointOfStrip = orderedPoints[0];
+      
+      // Calcular heading hacia el primer punto de la nueva banda
+      const connectionHeading = calculateBearing(
+        lastWaypoint.latitude, lastWaypoint.longitude,
+        firstPointOfStrip.lat, firstPointOfStrip.lng
+      );
+      
+      // Agregar waypoint de conexión
+      const connectionWaypoint: Waypoint = {
+        id: waypoints.length + 1,
+        latitude: firstPointOfStrip.lat,
+        longitude: firstPointOfStrip.lng,
+        altitude: corridorAltitude,
+        heading: connectionHeading,
+        curveSize: 0,
+        rotationDir: 0,
+        gimbalMode: 0,
+        gimbalPitchAngle: -90,
+        actionType1: 0, // No tomar foto en conexiones
+        actionParam1: 0,
+        altitudeMode: 0,
+        speed: flightSpeed,
+        poiLatitude: firstPointOfStrip.lat,
+        poiLongitude: firstPointOfStrip.lng,
+        poiAltitude: 0,
+        poiAltitudeMode: 0,
+        photoTimeInterval: 0,
+        photoDistInterval: 0,
+        takePhoto: false
+      };
+      
+      waypoints.push(connectionWaypoint);
+      
+      // Remover el primer punto de orderedPoints ya que lo agregamos como conexión
+      orderedPoints.shift();
+    }
+    
+    // Agregar waypoints de la banda actual
     orderedPoints.forEach((point, pointIndex) => {
       // Calcular heading hacia el siguiente punto
       let heading = 0;
       if (pointIndex < orderedPoints.length - 1) {
         const nextPoint = orderedPoints[pointIndex + 1];
         heading = calculateBearing(point.lat, point.lng, nextPoint.lat, nextPoint.lng);
+      } else if (stripIndex < strips.length - 1) {
+        // Si hay más bandas, calcular heading hacia la próxima banda
+        const nextStrip = strips[stripIndex + 1];
+        const nextStripOrdered = (stripIndex + 1) % 2 === 0 ? nextStrip : [...nextStrip].reverse();
+        if (nextStripOrdered.length > 0) {
+          heading = calculateBearing(point.lat, point.lng, nextStripOrdered[0].lat, nextStripOrdered[0].lng);
+        }
       } else if (pointIndex > 0) {
-        // Para el último punto, usar el heading del segmento anterior
+        // Para el último punto de la última banda, usar el heading anterior
         const prevPoint = orderedPoints[pointIndex - 1];
         heading = calculateBearing(prevPoint.lat, prevPoint.lng, point.lat, point.lng);
       }
