@@ -2,17 +2,19 @@ import React, { useRef, useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { Target } from 'lucide-react';
 import 'mapbox-gl/dist/mapbox-gl.css';
-
-// API key de Mapbox (mismo que en MapboxMissionMap)
-mapboxgl.accessToken = 'pk.eyJ1IjoiYWxleHNlaXBrZSIsImEiOiJjbWQ0dTZucWowa21hMmpxbmt5OTBhdGk3In0.T8W8UWhu81kBytK72KxJ3w';
+import { useMapboxToken } from '@/hooks/useMapboxToken';
 
 export function WelcomeMap() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const { token, loading: tokenLoading, error: tokenError } = useMapboxToken();
 
   useEffect(() => {
-    if (!mapContainer.current) return;
+    if (!mapContainer.current || !token) return;
+
+    // Set the Mapbox access token
+    mapboxgl.accessToken = token;
 
     // Obtener ubicación del usuario o usar Madrid por defecto
     navigator.geolocation.getCurrentPosition(
@@ -76,7 +78,7 @@ export function WelcomeMap() {
     return () => {
       map.current?.remove();
     };
-  }, []);
+  }, [token]);
 
   return (
     <div className="relative w-full h-full">
@@ -120,11 +122,23 @@ export function WelcomeMap() {
       </div>
       
       {/* Loading indicator */}
-      {!mapLoaded && (
+      {(tokenLoading || !mapLoaded) && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
           <div className="text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-            <p className="text-sm text-muted-foreground">Cargando mapa...</p>
+            <p className="text-sm text-muted-foreground">
+              {tokenLoading ? 'Cargando configuración...' : 'Cargando mapa...'}
+            </p>
+          </div>
+        </div>
+      )}
+      
+      {/* Error indicator */}
+      {tokenError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
+          <div className="text-center">
+            <p className="text-sm text-destructive mb-2">Error al cargar el mapa</p>
+            <p className="text-xs text-muted-foreground">{tokenError}</p>
           </div>
         </div>
       )}

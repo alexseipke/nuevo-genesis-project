@@ -4,9 +4,7 @@ import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import { Coordinates, MissionParameters, Waypoint } from '@/types/mission';
-
-// Tu API key de Mapbox
-mapboxgl.accessToken = 'pk.eyJ1IjoiYWxleHNlaXBrZSIsImEiOiJjbWQ0dTZucWowa21hMmpxbmt5OTBhdGk3In0.T8W8UWhu81kBytK72KxJ3w';
+import { useMapboxToken } from '@/hooks/useMapboxToken';
 
 interface MapboxMissionMapProps {
   parameters: MissionParameters;
@@ -23,10 +21,14 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const { token, loading: tokenLoading, error: tokenError } = useMapboxToken();
   
 
   useEffect(() => {
-    if (!mapContainer.current) return;
+    if (!mapContainer.current || !token) return;
+
+    // Set the Mapbox access token
+    mapboxgl.accessToken = token;
 
     // Get user location or default to Madrid
     navigator.geolocation.getCurrentPosition(
@@ -104,7 +106,7 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
     return () => {
       map.current?.remove();
     };
-  }, []);
+  }, [token]);
 
   // Actualizar marcadores cuando cambien los parámetros
   useEffect(() => {
@@ -343,6 +345,28 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
   return (
     <div className="relative w-full h-full">
       <div ref={mapContainer} className="w-full h-full" />
+      
+      {/* Loading indicator */}
+      {(tokenLoading || !mapLoaded) && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
+          <div className="text-center">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            <p className="text-sm text-muted-foreground">
+              {tokenLoading ? 'Cargando configuración...' : 'Cargando mapa...'}
+            </p>
+          </div>
+        </div>
+      )}
+      
+      {/* Error indicator */}
+      {tokenError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
+          <div className="text-center">
+            <p className="text-sm text-destructive mb-2">Error al cargar el mapa</p>
+            <p className="text-xs text-muted-foreground">{tokenError}</p>
+          </div>
+        </div>
+      )}
       
       
       {/* Instrucciones overlay - compacto y al lado del geocoder */}
