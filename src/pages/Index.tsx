@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { ControlPanel } from '@/components/ControlPanel';
-// import { MissionMap } from '@/components/MissionMap';
+import { SimpleMissionMap } from '@/components/SimpleMissionMap';
 import { MissionParameters, Coordinates, Waypoint, ValidationResult } from '@/types/mission';
 import { calculateOrbitWaypoints, validateMission, exportToLitchiCSV } from '@/utils/missionCalculations';
 import { toast } from 'sonner';
@@ -121,20 +121,12 @@ const Index = () => {
         />
         
         <div className="flex-1 p-4">
-          <div className="h-full rounded-lg overflow-hidden shadow-mission bg-gray-100 flex items-center justify-center">
-            <div className="text-center">
-              <h2 className="text-xl font-bold mb-2">Mapa en Desarrollo</h2>
-              <p className="text-muted-foreground">El mapa interactivo se cargará aquí</p>
-              <div className="mt-4 text-sm text-muted-foreground">
-                Waypoints generados: {waypoints.length}
-              </div>
-            </div>
-            {/* <MissionMap
+          <div className="h-full rounded-lg overflow-hidden shadow-mission">
+            <SimpleMissionMap
               parameters={parameters}
               waypoints={waypoints}
               onCenterChange={handleCenterChange}
-              onPOIChange={handlePOIChange}
-            /> */}
+            />
           </div>
         </div>
       </div>
