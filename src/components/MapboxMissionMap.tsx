@@ -200,22 +200,12 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
           `))
           .addTo(map.current);
 
-        // Cambiar cursor al hacer hover
-        vertexEl.addEventListener('mouseenter', () => {
-          vertexEl.style.cursor = 'grab';
-        });
-        
-        vertexEl.addEventListener('mousedown', () => {
-          vertexEl.style.cursor = 'grabbing';
-        });
-
         // Handle drag events
         marker.on('dragend', () => {
           const lngLat = marker.getLngLat();
           if (onCorridorPointUpdate) {
             onCorridorPointUpdate(index, { lat: lngLat.lat, lng: lngLat.lng });
           }
-          vertexEl.style.cursor = 'grab';
         });
 
         // Add midpoint markers for inserting new vertices
@@ -296,48 +286,8 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
       });
     }
 
-    // Dibujar línea del corredor o órbita
-    if (selectedMissionType === 'corredor-inteligente' && parameters.corridorPoints?.length > 1) {
-      const corridorCoordinates = parameters.corridorPoints.map(p => [p.lng, p.lat]);
-      
-      if (map.current.getSource('corridor-line')) {
-        (map.current.getSource('corridor-line') as mapboxgl.GeoJSONSource).setData({
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: corridorCoordinates
-          }
-        });
-      } else {
-        map.current.addSource('corridor-line', {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-              type: 'LineString',
-              coordinates: corridorCoordinates
-            }
-          }
-        });
-
-        map.current.addLayer({
-          id: 'corridor-line',
-          type: 'line',
-          source: 'corridor-line',
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round'
-          },
-          paint: {
-            'line-color': '#10b981',
-            'line-width': 3,
-            'line-opacity': 0.8
-          }
-        });
-      }
-    } else if (waypoints.length > 1) {
+    // Dibujar línea de la órbita
+    if (waypoints.length > 1) {
       const coordinates = waypoints.map(wp => [wp.longitude, wp.latitude]);
       
       if (map.current.getSource('orbit-line')) {
@@ -413,48 +363,21 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
       <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg p-3 shadow-lg border border-gray-200">
         <div className="text-xs font-semibold text-gray-800 mb-2">Leyenda</div>
         <div className="space-y-1 text-xs text-gray-700">
-          {selectedMissionType === 'orbita-inteligente' && (
-            <>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-blue-500 rounded-full border border-white"></div>
-                <span>Centro de Órbita</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-red-600 rounded-full border border-white"></div>
-                <span>Inicio Orbital</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-violet-500 rounded-full border border-white"></div>
-                <span>Waypoint</span>
-              </div>
-            </>
-          )}
-          {selectedMissionType === 'corredor-inteligente' && (
-            <>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-emerald-500 rounded-full border border-white"></div>
-                <span>Vértice del Eje</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-gray-500 rounded-full border border-white"></div>
-                <span>Punto de Inserción</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-violet-500 rounded-full border border-white"></div>
-                <span>Waypoint</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-0.5 bg-emerald-500"></div>
-                <span>Eje del Corredor</span>
-              </div>
-            </>
-          )}
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-blue-500 rounded-full border border-white"></div>
+            <span>Centro de Órbita</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-red-600 rounded-full border border-white"></div>
+            <span>Inicio Orbital</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-violet-500 rounded-full border border-white"></div>
+            <span>Waypoint</span>
+          </div>
         </div>
         <div className="mt-2 pt-2 border-t border-gray-200 text-xs">
           <div>Waypoints: {waypoints.length}</div>
-          {selectedMissionType === 'corredor-inteligente' && parameters.corridorPoints && (
-            <div>Vértices: {parameters.corridorPoints.length}</div>
-          )}
         </div>
       </div>
     </div>
