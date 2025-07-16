@@ -46,9 +46,6 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
         if (!parameters.center) {
           // Primer click establece el centro
           onCenterChange({ lat, lng });
-        } else if (e.originalEvent.ctrlKey || e.originalEvent.metaKey) {
-          // Ctrl+Click establece punto de inicio orbital
-          onOrbitStartChange({ lat, lng });
         }
       });
     });
@@ -277,13 +274,6 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
         </div>
       )}
       
-      {parameters.center && !parameters.orbitStartLocation && (
-        <div className="absolute top-4 left-4 right-4 bg-white/95 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-gray-200">
-          <p className="text-sm font-medium text-gray-800">
-            🎯 Mantén presionado Ctrl + Clic en el mapa para establecer el punto de inicio orbital
-          </p>
-        </div>
-      )}
 
       {/* Leyenda */}
       <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg p-3 shadow-lg border border-gray-200">

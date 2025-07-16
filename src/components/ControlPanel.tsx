@@ -88,6 +88,7 @@ export function ControlPanel({ parameters, onParametersChange, validation, onGen
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">Radio Inicial: {parameters.initialRadius}m</Label>
@@ -113,31 +114,6 @@ export function ControlPanel({ parameters, onParametersChange, validation, onGen
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs">Altura Inicial: {parameters.initialAltitude}m</Label>
-                <Slider
-                  value={[parameters.initialAltitude]}
-                  onValueChange={([value]) => onParametersChange({ initialAltitude: value })}
-                  min={-200}
-                  max={500}
-                  step={1}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Altura Final: {parameters.finalAltitude}m</Label>
-                <Slider
-                  value={[parameters.finalAltitude]}
-                  onValueChange={([value]) => onParametersChange({ finalAltitude: value })}
-                  min={-200}
-                  max={500}
-                  step={1}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-
             <div>
               <Label className="text-xs">Rotaciones: {parameters.rotations}</Label>
               <Slider
@@ -151,7 +127,7 @@ export function ControlPanel({ parameters, onParametersChange, validation, onGen
             </div>
 
             <div>
-              <Label className="text-xs">Ángulo de inicio: {parameters.startAngle || 0}°</Label>
+              <Label className="text-xs">Punto de Inicio: {parameters.startAngle || 0}°</Label>
               <Slider
                 value={[parameters.startAngle || 0]}
                 onValueChange={([value]) => onParametersChange({ startAngle: value })}
@@ -186,17 +162,6 @@ export function ControlPanel({ parameters, onParametersChange, validation, onGen
               />
             </div>
 
-            <div>
-              <Label className="text-xs">Cantidad de Imágenes: {parameters.imageCount}</Label>
-              <Slider
-                value={[parameters.imageCount]}
-                onValueChange={([value]) => onParametersChange({ imageCount: value })}
-                min={0}
-                max={99}
-                step={1}
-                className="mt-1"
-              />
-            </div>
           </CardContent>
         </Card>
 
@@ -240,7 +205,7 @@ export function ControlPanel({ parameters, onParametersChange, validation, onGen
               <Label className="text-xs">Modo de Gimbal</Label>
               <Select
                 value={parameters.gimbalMode}
-                onValueChange={(value: 'frontal' | 'poi') => onParametersChange({ gimbalMode: value })}
+                onValueChange={(value: 'frontal' | 'poi' | 'horizontal' | 'manual') => onParametersChange({ gimbalMode: value })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -248,6 +213,8 @@ export function ControlPanel({ parameters, onParametersChange, validation, onGen
                 <SelectContent>
                   <SelectItem value="frontal">Frontal (0° pitch)</SelectItem>
                   <SelectItem value="poi">Seguir POI</SelectItem>
+                  <SelectItem value="horizontal">Horizontal (-90°)</SelectItem>
+                  <SelectItem value="manual">Control Manual</SelectItem>
                 </SelectContent>
               </Select>
             </div>
