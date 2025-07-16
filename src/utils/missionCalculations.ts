@@ -50,71 +50,8 @@ export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
   const poiLng = params.center.lng;
   
   
-  // Calcular posiciones de fotos basadas en distancia equidistante
+  // Ya no manejamos fotos, solo waypoints
   const photoWaypoints = new Set<number>();
-  if (params.imageCount > 0 && actualWaypoints > 1) {
-    // Calcular distancia total aproximada del recorrido
-    let totalPathDistance = 0;
-    const waypointDistances: number[] = [0]; // Distancia acumulada hasta cada waypoint
-    
-    for (let i = 0; i < actualWaypoints; i++) {
-      const progress = i / actualWaypoints;
-      const angle = startAngle + angleIncrement * i;
-      const radius = params.initialRadius + (params.finalRadius - params.initialRadius) * progress;
-      
-      if (i > 0) {
-        const prevProgress = (i - 1) / actualWaypoints;
-        const prevAngle = startAngle + angleIncrement * (i - 1);
-        const prevRadius = params.initialRadius + (params.finalRadius - params.initialRadius) * prevProgress;
-        
-        // Calcular distancia entre waypoints consecutivos
-        const dr = radius - prevRadius;
-        const dTheta = angle - prevAngle;
-        const ds = Math.sqrt(dr * dr + (prevRadius * dTheta) * (prevRadius * dTheta));
-        totalPathDistance += ds;
-      }
-      waypointDistances.push(totalPathDistance);
-    }
-    
-    // Distribuir fotos desde el inicio hasta el final del recorrido
-    if (params.imageCount === 1) {
-      // Si solo hay una foto, ponerla en el medio del recorrido
-      const midDistance = totalPathDistance / 2;
-      let bestWaypointIndex = 0;
-      let minDistanceDiff = Math.abs(waypointDistances[0] - midDistance);
-      
-      for (let j = 1; j < waypointDistances.length; j++) {
-        const distanceDiff = Math.abs(waypointDistances[j] - midDistance);
-        if (distanceDiff < minDistanceDiff) {
-          minDistanceDiff = distanceDiff;
-          bestWaypointIndex = j;
-        }
-      }
-      photoWaypoints.add(bestWaypointIndex);
-    } else {
-      // Para múltiples fotos, distribuir desde inicio hasta final
-      for (let i = 0; i < params.imageCount; i++) {
-        const progress = i / (params.imageCount - 1); // De 0 a 1
-        const targetDistance = totalPathDistance * progress;
-        
-        // Encontrar el waypoint más cercano a esta distancia objetivo
-        let bestWaypointIndex = 0;
-        let minDistanceDiff = Math.abs(waypointDistances[0] - targetDistance);
-        
-        for (let j = 1; j < waypointDistances.length; j++) {
-          const distanceDiff = Math.abs(waypointDistances[j] - targetDistance);
-          if (distanceDiff < minDistanceDiff) {
-            minDistanceDiff = distanceDiff;
-            bestWaypointIndex = j;
-          }
-        }
-        
-        if (bestWaypointIndex < actualWaypoints) {
-          photoWaypoints.add(bestWaypointIndex);
-        }
-      }
-    }
-  }
   
   for (let i = 0; i <= actualWaypoints; i++) {
     const progress = i / actualWaypoints;
@@ -158,8 +95,8 @@ export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
       gimbalPitch = Math.max(-90, Math.min(30, gimbalPitch));
     }
     
-    // Determinar si este waypoint debe tomar foto
-    const takePhoto = photoWaypoints.has(i);
+    // Ya no tomamos fotos automáticamente
+    const takePhoto = false;
     
     const waypoint: Waypoint = {
       id: i + 1,

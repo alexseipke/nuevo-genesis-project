@@ -162,18 +162,22 @@ export function ControlPanel({ parameters, onParametersChange, validation }: Con
               />
             </div>
 
-            <div>
-              <Label className="text-xs">Distancia entre waypoints (m)</Label>
-              <Input
-                type="number"
-                value={parameters.waypointDistance}
-                onChange={(e) => onParametersChange({ waypointDistance: Number(e.target.value) })}
-                min={1}
-                max={1000}
-                className="mt-1"
-              />
-              <div className="text-xs text-muted-foreground mt-1">
-                Mínimo recomendado: {validation.suggestions.find(s => s.includes('Aumentar distancia'))?.match(/(\d+)m/)?.[1] || parameters.waypointDistance}m
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <Label className="text-xs">Dist. waypoints (m)</Label>
+                <Input
+                  type="number"
+                  value={parameters.waypointDistance}
+                  onChange={(e) => onParametersChange({ waypointDistance: Number(e.target.value) })}
+                  min={1}
+                  max={1000}
+                  className="mt-1 w-full"
+                />
+              </div>
+              <div className="text-xs text-muted-foreground">
+                <div>Recomendado</div>
+                <div>superior a:</div>
+                <div className="text-lg font-semibold text-foreground">{selectedDrone?.minWaypointDistance || 5}m</div>
               </div>
             </div>
 
@@ -189,17 +193,6 @@ export function ControlPanel({ parameters, onParametersChange, validation }: Con
               />
             </div>
 
-            <div>
-              <Label className="text-xs">Cantidad de Imágenes</Label>
-              <Input
-                type="number"
-                value={parameters.imageCount}
-                onChange={(e) => onParametersChange({ imageCount: Number(e.target.value) })}
-                min={0}
-                max={99}
-                className="mt-1"
-              />
-            </div>
 
           </CardContent>
         </Card>

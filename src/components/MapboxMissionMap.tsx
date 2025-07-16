@@ -152,31 +152,27 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
         .addTo(map.current);
     }
 
-    // Marcadores de cámaras - solo mostrar waypoints con fotos
-    waypoints.filter(wp => wp.takePhoto).forEach((waypoint, index) => {
-      const cameraEl = document.createElement('div');
-      cameraEl.className = 'mapbox-marker';
+    // Marcadores de waypoints
+    waypoints.forEach((waypoint, index) => {
+      const waypointEl = document.createElement('div');
+      waypointEl.className = 'mapbox-marker';
       
-      cameraEl.innerHTML = `
+      waypointEl.innerHTML = `
         <div style="
-          width: 16px; 
-          height: 16px; 
-          background-color: #10b981; 
+          width: 12px; 
+          height: 12px; 
+          background-color: #8b5cf6; 
           border: 2px solid white; 
           border-radius: 50%; 
           box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 8px;
-        ">📷</div>
+        "></div>
       `;
 
-      new mapboxgl.Marker(cameraEl)
+      new mapboxgl.Marker(waypointEl)
         .setLngLat([waypoint.longitude, waypoint.latitude])
         .setPopup(new mapboxgl.Popup({ offset: 15 }).setHTML(`
           <div style="font-size: 12px;">
-            <strong>📷 Posición de Cámara ${index + 1}</strong><br/>
+            <strong>Waypoint ${index + 1}</strong><br/>
             Lat: ${waypoint.latitude.toFixed(6)}<br/>
             Lng: ${waypoint.longitude.toFixed(6)}<br/>
             Alt: ${waypoint.altitude.toFixed(1)}m<br/>
@@ -261,13 +257,12 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
             <span>Inicio Orbital</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-emerald-500 rounded-full border border-white flex items-center justify-center text-xs">📷</div>
-            <span>Cámara</span>
+            <div className="w-3 h-3 bg-violet-500 rounded-full border border-white"></div>
+            <span>Waypoint</span>
           </div>
         </div>
         <div className="mt-2 pt-2 border-t border-gray-200 text-xs">
           <div>Waypoints: {waypoints.length}</div>
-          <div>Fotos: {waypoints.filter(wp => wp.takePhoto).length}</div>
         </div>
       </div>
     </div>

@@ -11,7 +11,6 @@ export interface MissionParameters {
   finalAltitude: number;
   rotations: number;
   startAngle?: number;
-  imageCount: number;
   waypointDistance: number;
   flightSpeed: number;
   orbitStartLocation: Coordinates | null;

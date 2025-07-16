@@ -104,10 +104,6 @@ function SimpleMap({ parameters, waypoints, onCenterChange }: {
             <div className="w-2 h-2 bg-green-500 rounded-full border border-white"></div>
             <span>Waypoint</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-purple-500 rounded-full border border-white"></div>
-            <span>Foto</span>
-          </div>
         </div>
         <div className="mt-2 pt-2 border-t border-gray-200">
           <div>Waypoints: {waypoints.length}</div>
@@ -125,7 +121,6 @@ const Index = () => {
     initialAltitude: 50,
     finalAltitude: 80,
     rotations: 2,
-    imageCount: 20,
     waypointDistance: 10,
     flightSpeed: 5,
     orbitStartLocation: null,
