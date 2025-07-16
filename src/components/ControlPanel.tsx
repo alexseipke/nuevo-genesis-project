@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ import {
   MapPin, 
   Layers, 
   Camera, 
-  Target, 
+  Target,
   RotateCw, 
   Ruler,
   AlertTriangle,
@@ -88,27 +89,51 @@ export function ControlPanel({ parameters, onParametersChange, validation, onGen
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Radio Inicial: {parameters.initialRadius}m</Label>
-                <Slider
-                  value={[parameters.initialRadius]}
-                  onValueChange={([value]) => onParametersChange({ initialRadius: value })}
+                <Label className="text-xs">Radio Inicial (m)</Label>
+                <Input
+                  type="number"
+                  value={parameters.initialRadius}
+                  onChange={(e) => onParametersChange({ initialRadius: Number(e.target.value) })}
                   min={1}
                   max={2000}
-                  step={1}
                   className="mt-1"
                 />
               </div>
               <div>
-                <Label className="text-xs">Radio Final: {parameters.finalRadius}m</Label>
-                <Slider
-                  value={[parameters.finalRadius]}
-                  onValueChange={([value]) => onParametersChange({ finalRadius: value })}
+                <Label className="text-xs">Radio Final (m)</Label>
+                <Input
+                  type="number"
+                  value={parameters.finalRadius}
+                  onChange={(e) => onParametersChange({ finalRadius: Number(e.target.value) })}
                   min={1}
                   max={2000}
-                  step={1}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Altura Inicial (m)</Label>
+                <Input
+                  type="number"
+                  value={parameters.initialAltitude}
+                  onChange={(e) => onParametersChange({ initialAltitude: Number(e.target.value) })}
+                  min={-200}
+                  max={500}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Altura Final (m)</Label>
+                <Input
+                  type="number"
+                  value={parameters.finalAltitude}
+                  onChange={(e) => onParametersChange({ finalAltitude: Number(e.target.value) })}
+                  min={-200}
+                  max={500}
                   className="mt-1"
                 />
               </div>
@@ -162,35 +187,21 @@ export function ControlPanel({ parameters, onParametersChange, validation, onGen
               />
             </div>
 
-          </CardContent>
-        </Card>
-
-        {/* Point of Interest */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <Target className="w-4 h-4" />
-              Point of Interest
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
             <div>
-              <Label className="text-xs">Altura POI por defecto: {parameters.defaultPoiAltitude}m</Label>
-              <Slider
-                value={[parameters.defaultPoiAltitude]}
-                onValueChange={([value]) => onParametersChange({ defaultPoiAltitude: value })}
+              <Label className="text-xs">Cantidad de Imágenes</Label>
+              <Input
+                type="number"
+                value={parameters.imageCount}
+                onChange={(e) => onParametersChange({ imageCount: Number(e.target.value) })}
                 min={0}
-                max={500}
-                step={1}
+                max={99}
                 className="mt-1"
               />
             </div>
-            
-            <p className="text-xs text-muted-foreground">
-              Ctrl + Clic en el mapa para establecer punto de inicio orbital
-            </p>
+
           </CardContent>
         </Card>
+
 
         {/* Camera & Gimbal */}
         <Card>
