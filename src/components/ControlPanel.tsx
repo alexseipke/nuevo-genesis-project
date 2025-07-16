@@ -276,17 +276,29 @@ export function ControlPanel({ parameters, onParametersChange, validation, selec
   // Renderizar panel específico según la misión seleccionada
   if (selectedMissionType === 'corredor-inteligente') {
     return (
-      <div className="w-80 h-full bg-background border-r border-border overflow-y-auto">
-        <div className="p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-foreground">Corredor Inteligente</h2>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => onMissionTypeSelect('')}
-            >
-              Cambiar
-            </Button>
+      <div className="w-80 h-full bg-gradient-to-b from-background via-background/95 to-primary/5 border-r border-border overflow-y-auto">
+        <div className="p-6 space-y-6">
+          {/* Header con animación */}
+          <div className="text-center mb-8 animate-fade-in">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-primary mb-4 shadow-lg">
+              <Target className="w-8 h-8 text-white" />
+            </div>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-foreground mb-2 bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
+                Corredor Inteligente
+              </h2>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => onMissionTypeSelect('')}
+                className="hover:bg-primary/10 transition-colors duration-300"
+              >
+                Cambiar
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+              Mapeo lineal inteligente para corredores y rutas
+            </p>
           </div>
 
           {/* Selección de Drone */}
