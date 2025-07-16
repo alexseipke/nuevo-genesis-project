@@ -12,29 +12,35 @@ export function calculateCorridorWaypoints(params: MissionParameters): Waypoint[
   const drone = DRONE_MODELS.find(d => d.id === params.selectedDrone);
   if (!drone) return [];
   
-  // Calcular la distancia entre fotos basada en el solapamiento frontal
-  // Asumiendo un campo de visión típico para drones DJI
-  const groundSampleDistance = 0.05; // 5cm/pixel aproximado a 50m altura
-  const imageWidth = 4000; // pixels típicos
-  const imageHeight = 3000; // pixels típicos
+  // Calcular cobertura del terreno usando el FOV de la cámara del drone
+  const altitudeInMeters = corridorAltitude;
+  const fovHRad = (drone.camera.fovH * Math.PI) / 180;
+  const fovVRad = (drone.camera.fovV * Math.PI) / 180;
   
-  const groundCoverageWidth = imageWidth * groundSampleDistance;
-  const groundCoverageLength = imageHeight * groundSampleDistance;
+  // Cobertura del terreno en metros
+  const groundCoverageWidth = 2 * Math.tan(fovHRad / 2) * altitudeInMeters;
+  const groundCoverageLength = 2 * Math.tan(fovVRad / 2) * altitudeInMeters;
   
+  // Distancia entre fotos y pasadas basada en solapamiento
   const photoDistance = groundCoverageLength * (1 - frontOverlap / 100);
   const passDistance = groundCoverageWidth * (1 - sideOverlap / 100);
   
   // Calcular número de pasadas necesarias
   const passesNeeded = Math.ceil(corridorWidth / passDistance);
   
-  // Generar waypoints para cada pasada
+  // Generar waypoints optimizando el patrón de vuelo
   for (let passIndex = 0; passIndex < passesNeeded; passIndex++) {
     const offsetDistance = (passIndex - (passesNeeded - 1) / 2) * passDistance;
+    const isEvenPass = passIndex % 2 === 0;
     
-    // Generar waypoints a lo largo del corredor para esta pasada
-    for (let i = 0; i < corridorPoints.length - 1; i++) {
-      const startPoint = corridorPoints[i];
-      const endPoint = corridorPoints[i + 1];
+    // Alternar dirección para optimizar tiempo de vuelo
+    const segmentOrder = isEvenPass 
+      ? Array.from({length: corridorPoints.length - 1}, (_, i) => i)
+      : Array.from({length: corridorPoints.length - 1}, (_, i) => corridorPoints.length - 2 - i);
+    
+    for (const segmentIndex of segmentOrder) {
+      const startPoint = isEvenPass ? corridorPoints[segmentIndex] : corridorPoints[segmentIndex + 1];
+      const endPoint = isEvenPass ? corridorPoints[segmentIndex + 1] : corridorPoints[segmentIndex];
       
       // Calcular el bearing del segmento
       const bearing = calculateBearing(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
@@ -81,6 +87,35 @@ export function calculateCorridorWaypoints(params: MissionParameters): Waypoint[
         
         waypoints.push(waypoint);
       }
+    }
+    
+    // Agregar waypoint de transición perpendicular al final de cada pasada (excepto la última)
+    if (passIndex < passesNeeded - 1) {
+      const lastWaypoint = waypoints[waypoints.length - 1];
+      const nextPassOffset = ((passIndex + 1) - (passesNeeded - 1) / 2) * passDistance;
+      const transitionDistance = Math.abs(nextPassOffset - offsetDistance);
+      
+      // Punto de transición perpendicular
+      const lastSegmentIndex = isEvenPass ? corridorPoints.length - 2 : 0;
+      const lastSegmentStart = corridorPoints[lastSegmentIndex];
+      const lastSegmentEnd = corridorPoints[lastSegmentIndex + 1];
+      const transitionBearing = calculateBearing(lastSegmentStart.lat, lastSegmentStart.lng, lastSegmentEnd.lat, lastSegmentEnd.lng);
+      const perpBearing = (transitionBearing + 90) % 360;
+      
+      const transitionCoords = moveCoordinate(lastWaypoint.latitude, lastWaypoint.longitude, perpBearing, transitionDistance);
+      
+      const transitionWaypoint: Waypoint = {
+        ...lastWaypoint,
+        id: waypoints.length + 1,
+        latitude: transitionCoords.lat,
+        longitude: transitionCoords.lng,
+        heading: perpBearing,
+        takePhoto: false,
+        actionType1: 0,
+        actionParam1: 0
+      };
+      
+      waypoints.push(transitionWaypoint);
     }
   }
   
