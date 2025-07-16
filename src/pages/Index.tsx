@@ -4,6 +4,7 @@ import { ControlPanel } from '@/components/ControlPanel';
 import { MapboxMissionMap } from '@/components/MapboxMissionMap';
 import { MissionParameters, Coordinates, Waypoint, ValidationResult } from '@/types/mission';
 import { calculateOrbitWaypoints, validateMission, exportToLitchiCSV } from '@/utils/missionCalculations';
+import { exportToKMZ } from '@/utils/kmzExport';
 import { toast } from 'sonner';
 
 // Componente de mapa simple sin Leaflet
@@ -173,27 +174,26 @@ const Index = () => {
     }
   };
 
-  const exportMission = () => {
+  const exportMission = async () => {
     if (waypoints.length === 0) {
       toast.error('Genera primero una misión');
       return;
     }
 
     try {
-      const csvContent = exportToLitchiCSV(waypoints);
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const kmzBlob = await exportToKMZ(waypoints, parameters);
       const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(kmzBlob);
       
       link.setAttribute('href', url);
-      link.setAttribute('download', `viizor_mission_${Date.now()}.csv`);
+      link.setAttribute('download', `viizor_mission_${Date.now()}.kmz`);
       link.style.visibility = 'hidden';
       
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
-      toast.success('Misión exportada exitosamente');
+      toast.success('Misión KMZ exportada para Google Earth Pro');
     } catch (error) {
       console.error('Error exporting mission:', error);
       toast.error('Error al exportar la misión');

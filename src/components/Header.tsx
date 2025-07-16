@@ -1,4 +1,4 @@
-import { Plane, Settings, Download } from 'lucide-react';
+import { Plane, Settings, Download, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface HeaderProps {
@@ -12,11 +12,10 @@ export function Header({ onExport, canExport }: HeaderProps) {
       <div className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-primary">
-            <Plane className="w-6 h-6 text-white" />
+            <Bot className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">Viizor</h1>
-            <p className="text-sm text-muted-foreground">Mission Planner</p>
+            <h1 className="text-xl font-bold text-foreground">Viizor - UAV Mission Planner</h1>
           </div>
         </div>
         
@@ -27,7 +26,7 @@ export function Header({ onExport, canExport }: HeaderProps) {
             className="bg-gradient-primary hover:opacity-90 transition-opacity"
           >
             <Download className="w-4 h-4 mr-2" />
-            Exportar CSV
+            Exportar KMZ
           </Button>
           
           <Button variant="outline" size="icon">

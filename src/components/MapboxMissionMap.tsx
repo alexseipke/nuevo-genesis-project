@@ -17,6 +17,7 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [is3D, setIs3D] = useState(false);
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -27,7 +28,7 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
       style: 'mapbox://styles/mapbox/satellite-streets-v12', // Estilo de satélite para drones
       center: [-3.7038, 40.4168], // Madrid
       zoom: 15,
-      pitch: 0,
+      pitch: is3D ? 60 : 0,
       bearing: 0
     });
 
@@ -37,6 +38,27 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
       
       // Añadir controles de navegación
       map.current?.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      
+      // Añadir control de terreno para vista 3D (si está disponible)
+      if ('TerrainControl' in mapboxgl) {
+        map.current?.addControl(new (mapboxgl as any).TerrainControl({
+          source: 'mapbox-dem',
+          exaggeration: 1.5
+        }), 'top-left');
+      }
+      
+      // Añadir fuente de datos de elevación
+      map.current?.addSource('mapbox-dem', {
+        type: 'raster-dem',
+        url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+        tileSize: 512,
+        maxzoom: 14
+      });
+      
+      // Establecer terreno 3D
+      if (is3D) {
+        map.current?.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+      }
       
       // Event listener para clicks en el mapa
       map.current?.on('click', (e) => {
@@ -133,16 +155,53 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
     waypoints.slice(0, 50).forEach((waypoint, index) => {
       const waypointEl = document.createElement('div');
       waypointEl.className = 'mapbox-marker';
-      waypointEl.innerHTML = `
-        <div style="
-          width: ${waypoint.takePhoto ? '10px' : '8px'}; 
-          height: ${waypoint.takePhoto ? '10px' : '8px'}; 
-          background-color: ${waypoint.takePhoto ? '#a855f7' : '#10b981'}; 
-          border: 1px solid white; 
-          border-radius: 50%; 
-          box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-        "></div>
-      `;
+      
+      if (waypoint.takePhoto && parameters.poiLocation) {
+        // Calcular ángulo hacia el POI para la cámara
+        const bearing = Math.atan2(
+          parameters.poiLocation.lng - waypoint.longitude,
+          parameters.poiLocation.lat - waypoint.latitude
+        ) * 180 / Math.PI;
+        
+        waypointEl.innerHTML = `
+          <div style="
+            width: 12px; 
+            height: 12px; 
+            position: relative;
+          ">
+            <div style="
+              width: 10px; 
+              height: 10px; 
+              background-color: #a855f7; 
+              border: 1px solid white; 
+              border-radius: 50%; 
+              box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            "></div>
+            <div style="
+              position: absolute;
+              top: -2px;
+              left: 50%;
+              transform: translateX(-50%) rotate(${bearing}deg);
+              width: 0;
+              height: 0;
+              border-left: 2px solid transparent;
+              border-right: 2px solid transparent;
+              border-bottom: 4px solid #a855f7;
+            "></div>
+          </div>
+        `;
+      } else {
+        waypointEl.innerHTML = `
+          <div style="
+            width: 8px; 
+            height: 8px; 
+            background-color: #10b981; 
+            border: 1px solid white; 
+            border-radius: 50%; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+          "></div>
+        `;
+      }
 
       new mapboxgl.Marker(waypointEl)
         .setLngLat([waypoint.longitude, waypoint.latitude])
@@ -283,9 +342,38 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
     };
   };
 
+  const toggle3D = () => {
+    if (map.current) {
+      const newIs3D = !is3D;
+      setIs3D(newIs3D);
+      
+      if (newIs3D) {
+        map.current.easeTo({ pitch: 60 });
+        map.current.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+      } else {
+        map.current.easeTo({ pitch: 0 });
+        map.current.setTerrain(null);
+      }
+    }
+  };
+
   return (
     <div className="relative w-full h-full">
       <div ref={mapContainer} className="w-full h-full" />
+      
+      {/* Control 3D */}
+      <div className="absolute top-4 right-4">
+        <button
+          onClick={toggle3D}
+          className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+            is3D 
+              ? 'bg-blue-500 text-white' 
+              : 'bg-white text-gray-700 border border-gray-300'
+          }`}
+        >
+          {is3D ? '3D ON' : '3D OFF'}
+        </button>
+      </div>
       
       {/* Instrucciones overlay */}
       {!parameters.center && (
@@ -323,8 +411,11 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
             <span>Waypoint</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-purple-500 rounded-full border border-white"></div>
-            <span>Waypoint con foto</span>
+            <div className="relative">
+              <div className="w-2 h-2 bg-purple-500 rounded-full border border-white"></div>
+              <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l border-r border-b-2 border-transparent border-b-purple-500"></div>
+            </div>
+            <span>Foto (📷 → POI)</span>
           </div>
         </div>
         <div className="mt-2 pt-2 border-t border-gray-200 text-xs">
