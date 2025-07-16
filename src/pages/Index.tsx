@@ -114,6 +114,7 @@ function SimpleMap({ parameters, waypoints, onCenterChange }: {
 }
 
 const Index = () => {
+  const [selectedMissionType, setSelectedMissionType] = useState<string | null>(null);
   const [parameters, setParameters] = useState<MissionParameters>({
     center: null,
     initialRadius: 50,
@@ -209,7 +210,7 @@ const Index = () => {
       const url = URL.createObjectURL(csvBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'litchi_mission.csv';
+      link.download = `litchi_${selectedMissionType || 'mission'}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -222,13 +223,13 @@ const Index = () => {
     }
   };
 
-  // Auto-generate mission when parameters change (if center is set)
+  // Auto-generate mission when parameters change (if center is set and mission type selected)
   useEffect(() => {
-    if (parameters.center) {
+    if (parameters.center && selectedMissionType === 'orbita-inteligente') {
       const newWaypoints = calculateOrbitWaypoints(parameters);
       setWaypoints(newWaypoints);
     }
-  }, [parameters]);
+  }, [parameters, selectedMissionType]);
 
   // Validate mission when waypoints change
   useEffect(() => {
@@ -242,6 +243,7 @@ const Index = () => {
           onExportKMZ={exportMissionKMZ}
           onExportLitchi={exportMissionLitchi}
           canExport={validation.isValid && waypoints.length > 0}
+          missionType={selectedMissionType === 'orbita-inteligente' ? 'Órbita Inteligente' : selectedMissionType === 'corredor-inteligente' ? 'Corredor Inteligente' : undefined}
         />
       
       <div className="flex-1 flex overflow-hidden">
@@ -249,16 +251,31 @@ const Index = () => {
           parameters={parameters}
           onParametersChange={handleParametersChange}
           validation={validation}
+          selectedMissionType={selectedMissionType}
+          onMissionTypeSelect={setSelectedMissionType}
         />
         
         <div className="flex-1 p-4">
           <div className="h-full rounded-lg overflow-hidden shadow-mission">
-            <MapboxMissionMap
-              parameters={parameters}
-              waypoints={waypoints}
-              onCenterChange={handleCenterChange}
-              onOrbitStartChange={handleOrbitStartChange}
-            />
+            {selectedMissionType ? (
+              <MapboxMissionMap
+                parameters={parameters}
+                waypoints={waypoints}
+                onCenterChange={handleCenterChange}
+                onOrbitStartChange={handleOrbitStartChange}
+              />
+            ) : (
+              <div className="h-full flex items-center justify-center bg-muted/30 rounded-lg">
+                <div className="text-center">
+                  <h3 className="text-xl font-medium text-foreground mb-2">
+                    Selecciona una misión
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Elige el tipo de inspección en el panel izquierdo para comenzar
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

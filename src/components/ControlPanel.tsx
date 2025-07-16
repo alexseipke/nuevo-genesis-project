@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Plane, 
   MapPin, 
@@ -21,25 +22,214 @@ import {
   Info,
   Clock,
   Battery,
-  Settings
+  Settings,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import { MissionParameters, ValidationResult } from '@/types/mission';
 import { DRONE_MODELS } from '@/data/drones';
+
+// Import the generated icons
+import inspeccionesVerticalesIcon from '@/assets/inspecciones-verticales.png';
+import viasCaminosIcon from '@/assets/vias-caminos.png';
+import grandesAreasIcon from '@/assets/grandes-areas.png';
+
+interface MissionCategory {
+  id: string;
+  title: string;
+  icon: string;
+  missions: MissionType[];
+}
+
+interface MissionType {
+  id: string;
+  title: string;
+  available: boolean;
+}
+
+const missionCategories: MissionCategory[] = [
+  {
+    id: 'inspecciones-verticales',
+    title: 'Inspecciones Verticales',
+    icon: inspeccionesVerticalesIcon,
+    missions: [
+      { id: 'orbita-inteligente', title: 'Órbita Inteligente', available: true },
+      { id: 'fachadas', title: 'Fachadas', available: false }
+    ]
+  },
+  {
+    id: 'vias-caminos',
+    title: 'Vías y Caminos',
+    icon: viasCaminosIcon,
+    missions: [
+      { id: 'corredor-inteligente', title: 'Corredor Inteligente', available: true },
+      { id: 'puntos-interes', title: 'Puntos de Interés', available: false }
+    ]
+  },
+  {
+    id: 'grandes-areas',
+    title: 'Grandes Áreas',
+    icon: grandesAreasIcon,
+    missions: [
+      { id: 'ortomosaicos-agiles', title: 'Ortomosaicos Ágiles', available: false },
+      { id: 'ortomosaicos-detallados', title: 'Ortomosaicos y Nubes Detalladas', available: false }
+    ]
+  }
+];
 
 interface ControlPanelProps {
   parameters: MissionParameters;
   onParametersChange: (params: Partial<MissionParameters>) => void;
   validation: ValidationResult;
+  selectedMissionType: string | null;
+  onMissionTypeSelect: (missionType: string) => void;
 }
 
-export function ControlPanel({ parameters, onParametersChange, validation }: ControlPanelProps) {
+export function ControlPanel({ parameters, onParametersChange, validation, selectedMissionType, onMissionTypeSelect }: ControlPanelProps) {
   const selectedDrone = DRONE_MODELS.find(d => d.id === parameters.selectedDrone);
+  const [openCategories, setOpenCategories] = useState<string[]>([]);
 
+  const toggleCategory = (categoryId: string) => {
+    setOpenCategories(prev => 
+      prev.includes(categoryId) 
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
+
+  const handleMissionSelect = (mission: MissionType) => {
+    if (mission.available) {
+      onMissionTypeSelect(mission.id);
+    }
+  };
+
+  // Si no hay misión seleccionada, mostrar selector
+  if (!selectedMissionType) {
+    return (
+      <div className="w-80 h-full bg-background border-r border-border overflow-y-auto">
+        <div className="p-4 space-y-4">
+          <div className="text-center mb-6">
+            <h2 className="text-lg font-bold text-foreground mb-1">
+              Selecciona tu Misión
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Elige el tipo de inspección que necesitas realizar
+            </p>
+          </div>
+
+          {missionCategories.map((category) => (
+            <Card key={category.id} className="mission-card overflow-hidden">
+              <Collapsible 
+                open={openCategories.includes(category.id)}
+                onOpenChange={() => toggleCategory(category.id)}
+              >
+                <CollapsibleTrigger asChild>
+                  <div className="flex items-center p-4 hover:bg-muted/50 transition-colors cursor-pointer">
+                    <div className="flex items-center flex-1 gap-3">
+                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <img 
+                          src={category.icon} 
+                          alt={category.title}
+                          className="w-8 h-8 opacity-70"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-sm font-semibold text-foreground">
+                          {category.title}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          {category.missions.length} misiones
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-muted-foreground">
+                      {openCategories.includes(category.id) ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </div>
+                  </div>
+                </CollapsibleTrigger>
+                
+                <CollapsibleContent>
+                  <CardContent className="pt-0 pb-4">
+                    <div className="space-y-2">
+                      {category.missions.map((mission) => (
+                        <Button
+                          key={mission.id}
+                          variant={mission.available ? "default" : "ghost"}
+                          className={`w-full justify-start h-auto p-3 text-left ${
+                            mission.available 
+                              ? "bg-primary/5 hover:bg-primary/10 border border-primary/20" 
+                              : "opacity-50 cursor-not-allowed"
+                          }`}
+                          onClick={() => handleMissionSelect(mission)}
+                          disabled={!mission.available}
+                        >
+                          <div>
+                            <div className="text-sm font-medium">
+                              {mission.title}
+                              {!mission.available && (
+                                <span className="ml-2 text-xs bg-muted text-muted-foreground px-2 py-1 rounded">
+                                  Próximamente
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </Button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Renderizar panel específico según la misión seleccionada
+  if (selectedMissionType === 'corredor-inteligente') {
+    return (
+      <div className="w-80 h-full bg-background border-r border-border overflow-y-auto">
+        <div className="p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-foreground">Corredor Inteligente</h2>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => onMissionTypeSelect('')}
+            >
+              Cambiar
+            </Button>
+          </div>
+          
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">
+              Panel de Corredor Inteligente en desarrollo... 🚧
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  // Panel de Órbita Inteligente (original)
   return (
     <div className="w-80 h-full bg-background border-r border-border overflow-y-auto">
       <div className="p-4 space-y-4">
         
-        {/* Drone Selection */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-foreground">Órbita Inteligente</h2>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => onMissionTypeSelect('')}
+          >
+            Cambiar
+          </Button>
+        </div>
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-sm">
