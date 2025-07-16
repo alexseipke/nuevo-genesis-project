@@ -54,7 +54,7 @@ const missionCategories: MissionCategory[] = [
     icon: inspeccionesVerticalesIcon,
     missions: [
       { id: 'orbita-inteligente', title: 'Órbita Inteligente', available: true },
-      { id: 'fachadas', title: 'Fachadas', available: false }
+      { id: 'fachadas-pro', title: 'Fachadas Pro', available: false }
     ]
   },
   {
@@ -71,8 +71,8 @@ const missionCategories: MissionCategory[] = [
     title: 'Grandes Áreas',
     icon: grandesAreasIcon,
     missions: [
-      { id: 'ortomosaicos-agiles', title: 'Ortomosaicos Ágiles', available: false },
-      { id: 'ortomosaicos-detallados', title: 'Ortomosaicos y Nubes Detalladas', available: false }
+      { id: 'ortomosaico-agil', title: 'Ortomosaico Ágil', available: false },
+      { id: 'nubes-detalladas-3d', title: 'Nubes detalladas y Modelos 3D', available: false }
     ]
   }
 ];
