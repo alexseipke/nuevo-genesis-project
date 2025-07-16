@@ -1,0 +1,66 @@
+export interface Coordinates {
+  lat: number;
+  lng: number;
+}
+
+export interface MissionParameters {
+  center: Coordinates | null;
+  initialRadius: number;
+  finalRadius: number;
+  initialAltitude: number;
+  finalAltitude: number;
+  rotations: number;
+  imageCount: number;
+  waypointDistance: number;
+  customPOI: boolean;
+  poiLocation: Coordinates | null;
+  poiInitialAltitude: number;
+  poiFinalAltitude: number;
+  gimbalMode: 'frontal' | 'poi';
+  selectedDrone: string;
+}
+
+export interface Waypoint {
+  id: number;
+  latitude: number;
+  longitude: number;
+  altitude: number;
+  heading: number;
+  curveSize: number;
+  rotationDir: number;
+  gimbalMode: number;
+  gimbalPitchAngle: number;
+  actionType1: number;
+  actionParam1: number;
+  altitudeMode: number;
+  speed: number;
+  poiLatitude: number;
+  poiLongitude: number;
+  poiAltitude: number;
+  poiAltitudeMode: number;
+  photoTimeInterval: number;
+  photoDistInterval: number;
+  takePhoto: boolean;
+}
+
+export interface DroneModel {
+  id: string;
+  name: string;
+  maxWaypoints: number;
+  maxDistance: number;
+  minWaypointDistance: number;
+  maxWaypointDistance: number;
+  altitudeRange: {
+    min: number;
+    max: number;
+  };
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  warnings: string[];
+  errors: string[];
+  suggestions: string[];
+  waypointCount: number;
+  totalDistance: number;
+}

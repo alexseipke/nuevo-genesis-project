@@ -1,0 +1,332 @@
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { 
+  Plane, 
+  MapPin, 
+  Layers, 
+  Camera, 
+  Target, 
+  RotateCw, 
+  Ruler,
+  AlertTriangle,
+  CheckCircle,
+  Info
+} from 'lucide-react';
+import { MissionParameters, ValidationResult } from '@/types/mission';
+import { DRONE_MODELS } from '@/data/drones';
+
+interface ControlPanelProps {
+  parameters: MissionParameters;
+  onParametersChange: (params: Partial<MissionParameters>) => void;
+  validation: ValidationResult;
+  onGenerateMission: () => void;
+}
+
+export function ControlPanel({ parameters, onParametersChange, validation, onGenerateMission }: ControlPanelProps) {
+  const [expandedSections, setExpandedSections] = useState({
+    drone: true,
+    orbit: true,
+    poi: false,
+    camera: false
+  });
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const selectedDrone = DRONE_MODELS.find(d => d.id === parameters.selectedDrone);
+
+  return (
+    <div className="w-80 h-full bg-background border-r border-border overflow-y-auto">
+      <div className="p-4 space-y-4">
+        
+        {/* Drone Selection */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Plane className="w-4 h-4" />
+              Selección de Drone
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <Label htmlFor="drone-select" className="text-xs">Modelo de Drone</Label>
+              <Select
+                value={parameters.selectedDrone}
+                onValueChange={(value) => onParametersChange({ selectedDrone: value })}
+              >
+                <SelectTrigger id="drone-select">
+                  <SelectValue placeholder="Seleccionar drone..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {DRONE_MODELS.map(drone => (
+                    <SelectItem key={drone.id} value={drone.id}>
+                      {drone.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {selectedDrone && (
+              <div className="text-xs text-muted-foreground space-y-1">
+                <div>Max waypoints: {selectedDrone.maxWaypoints}</div>
+                <div>Max distancia: {selectedDrone.maxDistance/1000}km</div>
+                <div>Altitud: {selectedDrone.altitudeRange.min}m a {selectedDrone.altitudeRange.max}m</div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Orbit Parameters */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <RotateCw className="w-4 h-4" />
+              Parámetros de Órbita
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="initial-radius" className="text-xs">Radio Inicial (m)</Label>
+                <Input
+                  id="initial-radius"
+                  type="number"
+                  value={parameters.initialRadius}
+                  onChange={(e) => onParametersChange({ initialRadius: Number(e.target.value) })}
+                  min="1"
+                  max="2000"
+                />
+              </div>
+              <div>
+                <Label htmlFor="final-radius" className="text-xs">Radio Final (m)</Label>
+                <Input
+                  id="final-radius"
+                  type="number"
+                  value={parameters.finalRadius}
+                  onChange={(e) => onParametersChange({ finalRadius: Number(e.target.value) })}
+                  min="1"
+                  max="2000"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="initial-alt" className="text-xs">Altura Inicial (m)</Label>
+                <Input
+                  id="initial-alt"
+                  type="number"
+                  value={parameters.initialAltitude}
+                  onChange={(e) => onParametersChange({ initialAltitude: Number(e.target.value) })}
+                  min="-200"
+                  max="500"
+                />
+              </div>
+              <div>
+                <Label htmlFor="final-alt" className="text-xs">Altura Final (m)</Label>
+                <Input
+                  id="final-alt"
+                  type="number"
+                  value={parameters.finalAltitude}
+                  onChange={(e) => onParametersChange({ finalAltitude: Number(e.target.value) })}
+                  min="-200"
+                  max="500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="rotations" className="text-xs">Rotaciones</Label>
+              <Input
+                id="rotations"
+                type="number"
+                value={parameters.rotations}
+                onChange={(e) => onParametersChange({ rotations: Number(e.target.value) })}
+                min="1"
+                max="10"
+                step="0.5"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs">Distancia entre Waypoints: {parameters.waypointDistance}m</Label>
+              <Slider
+                value={[parameters.waypointDistance]}
+                onValueChange={([value]) => onParametersChange({ waypointDistance: value })}
+                min={1}
+                max={50}
+                step={1}
+                className="mt-2"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="images" className="text-xs">Cantidad de Imágenes</Label>
+              <Input
+                id="images"
+                type="number"
+                value={parameters.imageCount}
+                onChange={(e) => onParametersChange({ imageCount: Number(e.target.value) })}
+                min="0"
+                max="99"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* POI Configuration */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Target className="w-4 h-4" />
+              Point of Interest
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="custom-poi" className="text-xs">POI Personalizado</Label>
+              <Switch
+                id="custom-poi"
+                checked={parameters.customPOI}
+                onCheckedChange={(checked) => onParametersChange({ customPOI: checked })}
+              />
+            </div>
+
+            {parameters.customPOI && (
+              <div className="space-y-3 pt-2 border-t border-border">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="poi-initial-alt" className="text-xs">Altura Inicial POI (m)</Label>
+                    <Input
+                      id="poi-initial-alt"
+                      type="number"
+                      value={parameters.poiInitialAltitude}
+                      onChange={(e) => onParametersChange({ poiInitialAltitude: Number(e.target.value) })}
+                      min="-200"
+                      max="500"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="poi-final-alt" className="text-xs">Altura Final POI (m)</Label>
+                    <Input
+                      id="poi-final-alt"
+                      type="number"
+                      value={parameters.poiFinalAltitude}
+                      onChange={(e) => onParametersChange({ poiFinalAltitude: Number(e.target.value) })}
+                      min="-200"
+                      max="500"
+                    />
+                  </div>
+                </div>
+                
+                {!parameters.poiLocation && (
+                  <p className="text-xs text-muted-foreground">
+                    Haz clic en el mapa para establecer la ubicación del POI
+                  </p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Camera & Gimbal */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Camera className="w-4 h-4" />
+              Cámara y Gimbal
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <Label className="text-xs">Modo de Gimbal</Label>
+              <Select
+                value={parameters.gimbalMode}
+                onValueChange={(value: 'frontal' | 'poi') => onParametersChange({ gimbalMode: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="frontal">Frontal (0° pitch)</SelectItem>
+                  <SelectItem value="poi">Seguir POI</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Mission Status */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Info className="w-4 h-4" />
+              Estado de la Misión
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <div className="text-muted-foreground">Waypoints</div>
+                <div className="font-medium">{validation.waypointCount}/99</div>
+              </div>
+              <div>
+                <div className="text-muted-foreground">Distancia</div>
+                <div className="font-medium">{(validation.totalDistance / 1000).toFixed(1)}km</div>
+              </div>
+            </div>
+
+            {/* Validation Messages */}
+            {validation.errors.length > 0 && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  {validation.errors[0]}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {validation.warnings.length > 0 && validation.errors.length === 0 && (
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  {validation.warnings[0]}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {validation.isValid && validation.warnings.length === 0 && validation.waypointCount > 0 && (
+              <Alert className="border-mission-green">
+                <CheckCircle className="h-4 w-4 text-mission-green" />
+                <AlertDescription className="text-xs">
+                  Misión válida y lista para exportar
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <Button
+              onClick={onGenerateMission}
+              disabled={!parameters.center}
+              className="w-full bg-gradient-primary hover:opacity-90"
+            >
+              <RotateCw className="w-4 h-4 mr-2" />
+              Generar Misión
+            </Button>
+          </CardContent>
+        </Card>
+
+      </div>
+    </div>
+  );
+}
