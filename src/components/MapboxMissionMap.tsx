@@ -5,6 +5,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import { Coordinates, MissionParameters, Waypoint } from '@/types/mission';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
+import { MapboxTokenInput } from '@/components/MapboxTokenInput';
 
 interface MapboxMissionMapProps {
   parameters: MissionParameters;
@@ -21,7 +22,7 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const { token, loading: tokenLoading, error: tokenError } = useMapboxToken();
+  const { token, loading: tokenLoading, error: tokenError, showTokenInput, setManualToken } = useMapboxToken();
   
 
   useEffect(() => {
@@ -344,6 +345,7 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
 
   return (
     <div className="relative w-full h-full">
+      {showTokenInput && <MapboxTokenInput onTokenSet={setManualToken} />}
       <div ref={mapContainer} className="w-full h-full" />
       
       {/* Loading indicator */}

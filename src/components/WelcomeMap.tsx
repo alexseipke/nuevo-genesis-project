@@ -3,12 +3,13 @@ import mapboxgl from 'mapbox-gl';
 import { Target } from 'lucide-react';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
+import { MapboxTokenInput } from '@/components/MapboxTokenInput';
 
 export function WelcomeMap() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const { token, loading: tokenLoading, error: tokenError } = useMapboxToken();
+  const { token, loading: tokenLoading, error: tokenError, showTokenInput, setManualToken } = useMapboxToken();
 
   useEffect(() => {
     if (!mapContainer.current || !token) return;
@@ -82,6 +83,7 @@ export function WelcomeMap() {
 
   return (
     <div className="relative w-full h-full">
+      {showTokenInput && <MapboxTokenInput onTokenSet={setManualToken} />}
       <div ref={mapContainer} className="absolute inset-0 w-full h-full" />
       
       {/* Overlay con texto de bienvenida */}
