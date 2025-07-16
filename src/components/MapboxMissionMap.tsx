@@ -4,7 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Coordinates, MissionParameters, Waypoint } from '@/types/mission';
 
 // Tu API key de Mapbox
-mapboxgl.accessToken = 'pk.eyJ1IjoiYWxleHNlaXBrZSIsImEiOiJjbWQ0dTZucWowa21hMmpxbmt5OTBhdGE3In0.T8W8UWhu81kBytK72KxJ3w';
+mapboxgl.accessToken = 'pk.eyJ1IjoiYWxleHNlaXBrZSIsImEiOiJjbWQ0dTZucWowa21hMmpxbmt5OTBhdGk3In0.T8W8UWhu81kBytK72KxJ3w';
 
 interface MapboxMissionMapProps {
   parameters: MissionParameters;
