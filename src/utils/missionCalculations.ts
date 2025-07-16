@@ -50,19 +50,52 @@ export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
   const poiLng = params.center.lng;
   
   
-  // Determinar waypoints que tomarán fotos - distribución más uniforme
+  // Calcular posiciones de fotos basadas en distancia equidistante
   const photoWaypoints = new Set<number>();
-  if (params.imageCount > 0 && actualWaypoints > 0) {
-    if (params.imageCount >= actualWaypoints) {
-      // Si se piden más fotos que waypoints, tomar foto en cada waypoint
-      for (let i = 0; i < actualWaypoints; i++) {
-        photoWaypoints.add(i);
+  if (params.imageCount > 0 && actualWaypoints > 1) {
+    // Calcular distancia total aproximada del recorrido
+    let totalPathDistance = 0;
+    const waypointDistances: number[] = [0]; // Distancia acumulada hasta cada waypoint
+    
+    for (let i = 0; i < actualWaypoints; i++) {
+      const progress = i / actualWaypoints;
+      const angle = startAngle + angleIncrement * i;
+      const radius = params.initialRadius + (params.finalRadius - params.initialRadius) * progress;
+      
+      if (i > 0) {
+        const prevProgress = (i - 1) / actualWaypoints;
+        const prevAngle = startAngle + angleIncrement * (i - 1);
+        const prevRadius = params.initialRadius + (params.finalRadius - params.initialRadius) * prevProgress;
+        
+        // Calcular distancia entre waypoints consecutivos
+        const dr = radius - prevRadius;
+        const dTheta = angle - prevAngle;
+        const ds = Math.sqrt(dr * dr + (prevRadius * dTheta) * (prevRadius * dTheta));
+        totalPathDistance += ds;
       }
-    } else {
-      // Distribuir fotos uniformemente a lo largo del recorrido
-      for (let i = 0; i < params.imageCount; i++) {
-        const waypointIndex = Math.round((i * (actualWaypoints - 1)) / (params.imageCount - 1));
-        photoWaypoints.add(waypointIndex);
+      waypointDistances.push(totalPathDistance);
+    }
+    
+    // Calcular intervalos equidistantes para las fotos
+    const photoInterval = totalPathDistance / (params.imageCount + 1); // +1 para no poner foto al final
+    
+    for (let i = 1; i <= params.imageCount; i++) {
+      const targetDistance = photoInterval * i;
+      
+      // Encontrar el waypoint más cercano a esta distancia objetivo
+      let bestWaypointIndex = 0;
+      let minDistanceDiff = Math.abs(waypointDistances[0] - targetDistance);
+      
+      for (let j = 1; j < waypointDistances.length; j++) {
+        const distanceDiff = Math.abs(waypointDistances[j] - targetDistance);
+        if (distanceDiff < minDistanceDiff) {
+          minDistanceDiff = distanceDiff;
+          bestWaypointIndex = j;
+        }
+      }
+      
+      if (bestWaypointIndex < actualWaypoints) {
+        photoWaypoints.add(bestWaypointIndex);
       }
     }
   }
