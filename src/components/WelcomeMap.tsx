@@ -107,7 +107,7 @@ export function WelcomeMap() {
           </div>
           <div className="relative overflow-hidden bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 rounded-lg px-6 py-3 shadow-lg">
             <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 animate-pulse opacity-20"></div>
-            <div className="relative z-10 text-sm font-semibold text-white animate-bounce">
+            <div className="relative z-10 text-base font-semibold text-white">
               ✨ Selecciona un tipo de misión en el panel izquierdo para comenzar ✨
             </div>
             {/* Efecto de brillo que se mueve */}
