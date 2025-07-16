@@ -58,13 +58,20 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
         // Añadir controles de navegación
         map.current?.addControl(new mapboxgl.NavigationControl(), 'top-right');
         
-        // Add geocoder for location search
+        // Add geocoder for location search with larger size
         const geocoder = new MapboxGeocoder({
           accessToken: mapboxgl.accessToken,
           mapboxgl: mapboxgl,
           placeholder: 'Buscar ubicación...',
           language: 'es'
         });
+        
+        // Style the geocoder to be larger
+        const geocoderContainer = geocoder.onAdd(map.current);
+        geocoderContainer.style.width = '300px';
+        geocoderContainer.querySelector('.mapboxgl-ctrl-geocoder--input').style.height = '44px';
+        geocoderContainer.querySelector('.mapboxgl-ctrl-geocoder--input').style.fontSize = '14px';
+        
         map.current?.addControl(geocoder, 'top-left');
         
         // Event listener para clicks en el mapa
@@ -338,11 +345,11 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
       <div ref={mapContainer} className="w-full h-full" />
       
       
-      {/* Instrucciones overlay */}
+      {/* Instrucciones overlay - compacto y al lado del geocoder */}
       {selectedMissionType === 'orbita-inteligente' && !parameters.center && (
-        <div className="absolute top-20 left-4 right-4 bg-white/95 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-gray-200">
-          <p className="text-sm font-medium text-gray-800">
-            📍 Haz clic en el mapa para establecer el centro de la órbita
+        <div className="absolute top-4 left-80 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-gray-200">
+          <p className="text-xs font-medium text-gray-800">
+            📍 Haz clic para establecer el centro de la órbita
           </p>
         </div>
       )}
