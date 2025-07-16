@@ -14,9 +14,8 @@ export interface MissionParameters {
   imageCount: number;
   waypointDistance: number;
   flightSpeed: number;
-  defaultPoiAltitude: number;
   orbitStartLocation: Coordinates | null;
-  gimbalMode: 'frontal' | 'poi' | 'horizontal' | 'manual';
+  targetAltitude?: number;
   selectedDrone: string;
 }
 

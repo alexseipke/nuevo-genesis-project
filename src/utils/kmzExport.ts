@@ -97,7 +97,7 @@ function generateKML(waypoints: Waypoint[], parameters: MissionParameters): stri
       <styleUrl>#centerStyle</styleUrl>
       <Point>
         <altitudeMode>relativeToGround</altitudeMode>
-        <coordinates>${poiCoords.lng},${poiCoords.lat},${parameters.defaultPoiAltitude - takeoffAltitude}</coordinates>
+        <coordinates>${poiCoords.lng},${poiCoords.lat},${(parameters.targetAltitude || 0) - takeoffAltitude}</coordinates>
       </Point>
     </Placemark>`;
   }

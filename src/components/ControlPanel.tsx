@@ -30,10 +30,9 @@ interface ControlPanelProps {
   parameters: MissionParameters;
   onParametersChange: (params: Partial<MissionParameters>) => void;
   validation: ValidationResult;
-  onGenerateMission: () => void;
 }
 
-export function ControlPanel({ parameters, onParametersChange, validation, onGenerateMission }: ControlPanelProps) {
+export function ControlPanel({ parameters, onParametersChange, validation }: ControlPanelProps) {
   const selectedDrone = DRONE_MODELS.find(d => d.id === parameters.selectedDrone);
 
   return (
@@ -300,14 +299,6 @@ export function ControlPanel({ parameters, onParametersChange, validation, onGen
               </Alert>
             )}
 
-            <Button
-              onClick={onGenerateMission}
-              disabled={!parameters.center}
-              className="w-full bg-gradient-primary hover:opacity-90"
-            >
-              <RotateCw className="w-4 h-4 mr-2" />
-              Generar Misión
-            </Button>
           </CardContent>
         </Card>
 

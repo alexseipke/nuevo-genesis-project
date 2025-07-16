@@ -1,6 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
+import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import { Coordinates, MissionParameters, Waypoint } from '@/types/mission';
 
 // Tu API key de Mapbox
@@ -17,38 +19,61 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [is3D, setIs3D] = useState(false);
+  
 
   useEffect(() => {
     if (!mapContainer.current) return;
 
-    // Inicializar el mapa
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/satellite-streets-v12', // Estilo de satélite para drones
-      center: [-3.7038, 40.4168], // Madrid
-      zoom: 15,
-      pitch: is3D ? 60 : 0,
-      bearing: 0
-    });
+    // Get user location or default to Madrid
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        initializeMap([longitude, latitude]);
+      },
+      (error) => {
+        console.warn('Could not get user location:', error);
+        initializeMap([-3.7038, 40.4168]); // Madrid fallback
+      }
+    );
 
-    // Configurar eventos del mapa
-    map.current.on('load', () => {
-      setMapLoaded(true);
-      
-      // Añadir controles de navegación
-      map.current?.addControl(new mapboxgl.NavigationControl(), 'top-right');
-      
-      // Event listener para clicks en el mapa
-      map.current?.on('click', (e) => {
-        const { lng, lat } = e.lngLat;
-        
-        if (!parameters.center) {
-          // Primer click establece el centro
-          onCenterChange({ lat, lng });
-        }
+    function initializeMap(center: [number, number]) {
+      // Inicializar el mapa
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current!,
+        style: 'mapbox://styles/mapbox/satellite-streets-v12',
+        center: center,
+        zoom: 15,
+        pitch: 0,
+        bearing: 0
       });
-    });
+
+      // Configurar eventos del mapa
+      map.current!.on('load', () => {
+        setMapLoaded(true);
+        
+        // Añadir controles de navegación
+        map.current?.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        
+        // Add geocoder for location search
+        const geocoder = new MapboxGeocoder({
+          accessToken: mapboxgl.accessToken,
+          mapboxgl: mapboxgl,
+          placeholder: 'Buscar ubicación...',
+          language: 'es'
+        });
+        map.current?.addControl(geocoder, 'top-left');
+        
+        // Event listener para clicks en el mapa
+        map.current?.on('click', (e) => {
+          const { lng, lat } = e.lngLat;
+          
+          if (!parameters.center) {
+            // Primer click establece el centro
+            onCenterChange({ lat, lng });
+          }
+        });
+      });
+    }
 
     return () => {
       map.current?.remove();
@@ -234,36 +259,11 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
 
   }, [parameters, waypoints, mapLoaded]);
 
-  const toggle3D = () => {
-    if (map.current) {
-      const newIs3D = !is3D;
-      setIs3D(newIs3D);
-      
-      if (newIs3D) {
-        map.current.easeTo({ pitch: 60 });
-      } else {
-        map.current.easeTo({ pitch: 0 });
-      }
-    }
-  };
 
   return (
     <div className="relative w-full h-full">
       <div ref={mapContainer} className="w-full h-full" />
       
-      {/* Control 3D */}
-      <div className="absolute top-4 right-4">
-        <button
-          onClick={toggle3D}
-          className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-            is3D 
-              ? 'bg-blue-500 text-white' 
-              : 'bg-white text-gray-700 border border-gray-300'
-          }`}
-        >
-          {is3D ? '3D ON' : '3D OFF'}
-        </button>
-      </div>
       
       {/* Instrucciones overlay */}
       {!parameters.center && (

@@ -32,9 +32,13 @@ export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
     totalDistance += ds;
   }
   
-  // Número de waypoints basado en la distancia deseada
-  const estimatedWaypoints = Math.max(2, Math.floor(totalDistance / params.waypointDistance));
-  const actualWaypoints = Math.min(estimatedWaypoints, 99); // Límite DJI
+  // Find selected drone for waypoint limit
+  const drone = DRONE_MODELS.find(d => d.id === params.selectedDrone);
+  const maxWaypoints = drone ? drone.maxWaypoints : 99;
+  
+  // Calculate waypoint distance to not exceed drone limit
+  const optimalWaypointDistance = Math.max(params.waypointDistance, totalDistance / maxWaypoints);
+  const actualWaypoints = Math.min(Math.max(2, Math.floor(totalDistance / optimalWaypointDistance)), maxWaypoints);
   
   // Calcular incremento angular
   const angleIncrement = totalAngle / actualWaypoints;
@@ -69,9 +73,9 @@ export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
     const lat = params.center.lat + deltaLat;
     const lng = params.center.lng + deltaLng;
     
-    // Calcular heading (dirección al siguiente waypoint o POI)
+    // Calcular heading (dirección al siguiente waypoint)
     let heading = 0;
-    if (params.gimbalMode === 'frontal' && i < actualWaypoints) {
+    if (i < actualWaypoints) {
       // Heading hacia el siguiente waypoint
       const nextProgress = (i + 1) / actualWaypoints;
       const nextAngle = startAngle + angleIncrement * (i + 1);
@@ -83,19 +87,13 @@ export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
       
       heading = Math.atan2(nextLng - lng, nextLat - lat) * 180 / Math.PI;
       if (heading < 0) heading += 360;
-    } else if (params.gimbalMode === 'poi') {
-      // Heading hacia POI
-      heading = Math.atan2(poiLng - lng, poiLat - lat) * 180 / Math.PI;
-      if (heading < 0) heading += 360;
     }
     
-    // Calcular gimbal pitch para modo POI
+    // Calcular gimbal pitch basado en altura de objetivo
     let gimbalPitch = 0;
-    if (params.gimbalMode === 'poi') {
-      const poiAltitude = params.defaultPoiAltitude;
-      
+    if (params.targetAltitude !== undefined) {
       const horizontalDistance = radius;
-      const verticalDistance = altitude - poiAltitude;
+      const verticalDistance = altitude - params.targetAltitude;
       gimbalPitch = -Math.atan2(verticalDistance, horizontalDistance) * 180 / Math.PI;
       // Limitar pitch del gimbal a rangos realistas
       gimbalPitch = Math.max(-90, Math.min(30, gimbalPitch));
@@ -112,7 +110,7 @@ export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
       heading: heading,
       curveSize: 0,
       rotationDir: 0,
-      gimbalMode: params.gimbalMode === 'poi' ? 2 : 0, // 0=free, 2=focus POI
+      gimbalMode: params.targetAltitude !== undefined ? 2 : 0, // 0=free, 2=focus target
       gimbalPitchAngle: gimbalPitch,
       actionType1: takePhoto ? 1 : 0, // 1=take photo
       actionParam1: takePhoto ? 1 : 0,
@@ -120,7 +118,7 @@ export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
       speed: params.flightSpeed,
       poiLatitude: poiLat,
       poiLongitude: poiLng,
-      poiAltitude: params.defaultPoiAltitude,
+      poiAltitude: params.targetAltitude || 0,
       poiAltitudeMode: 0,
       photoTimeInterval: 0,
       photoDistInterval: 0,
@@ -163,28 +161,31 @@ export function validateMission(params: MissionParameters, waypoints: Waypoint[]
     result.totalDistance += dist;
   }
 
-  // Calculate estimated duration (flight time + photo time)
-  const flightTime = result.totalDistance / params.flightSpeed / 60; // minutes
-  const photoTime = params.imageCount * 0.5; // 0.5 min per photo
-  result.estimatedDuration = flightTime + photoTime;
+  // Calculate estimated duration (flight time only, in seconds)
+  const flightTimeSeconds = result.totalDistance / params.flightSpeed; // seconds
+  result.estimatedDuration = flightTimeSeconds / 60; // convert to minutes
 
   // Calculate batteries required
   result.batteriesRequired = Math.ceil(result.estimatedDuration / drone.batteryLife);
 
-  // Calculate automatic gimbal angle for POI mode
-  if (params.gimbalMode === 'poi' && params.center) {
+  // Calculate automatic gimbal angle for target altitude mode
+  if (params.targetAltitude !== undefined && params.center) {
     const avgRadius = (params.initialRadius + params.finalRadius) / 2;
     const avgAltitude = (params.initialAltitude + params.finalAltitude) / 2;
-    const verticalDistance = avgAltitude - params.defaultPoiAltitude;
+    const verticalDistance = avgAltitude - params.targetAltitude;
     result.automaticGimbalAngle = -Math.atan2(verticalDistance, avgRadius) * 180 / Math.PI;
     result.automaticGimbalAngle = Math.max(-90, Math.min(30, result.automaticGimbalAngle));
   }
   
-  // Validate waypoint count
+  // Validate waypoint count and suggest optimal distance
   if (waypoints.length > drone.maxWaypoints) {
     result.errors.push(`Demasiados waypoints: ${waypoints.length}/${drone.maxWaypoints}`);
-    result.suggestions.push(`Aumentar distancia entre waypoints a ${Math.ceil(params.waypointDistance * 1.5)}m`);
+    const optimalDistance = Math.ceil(result.totalDistance / drone.maxWaypoints);
+    result.suggestions.push(`Aumentar distancia entre waypoints a ${optimalDistance}m para no exceder límite del drone`);
     result.isValid = false;
+  } else if (waypoints.length > drone.maxWaypoints * 0.8) {
+    const optimalDistance = Math.ceil(result.totalDistance / (drone.maxWaypoints * 0.8));
+    result.warnings.push(`Cerca del límite de waypoints. Considere aumentar distancia a ${optimalDistance}m para mejor calidad de vuelo`);
   }
   
   // Validate total distance

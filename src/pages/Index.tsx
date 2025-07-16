@@ -128,9 +128,8 @@ const Index = () => {
     imageCount: 20,
     waypointDistance: 10,
     flightSpeed: 5,
-    defaultPoiAltitude: 0,
     orbitStartLocation: null,
-    gimbalMode: 'frontal',
+    targetAltitude: undefined,
     selectedDrone: 'mavic-3-enterprise'
   });
 
@@ -255,7 +254,6 @@ const Index = () => {
           parameters={parameters}
           onParametersChange={handleParametersChange}
           validation={validation}
-          onGenerateMission={generateMission}
         />
         
         <div className="flex-1 p-4">
