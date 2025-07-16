@@ -127,10 +127,9 @@ const Index = () => {
     rotations: 2,
     imageCount: 20,
     waypointDistance: 10,
-    customPOI: false,
-    poiLocation: null,
-    poiInitialAltitude: 50,
-    poiFinalAltitude: 80,
+    flightSpeed: 5,
+    defaultPoiAltitude: 0,
+    orbitStartLocation: null,
     gimbalMode: 'frontal',
     selectedDrone: 'mavic-3-enterprise'
   });
@@ -142,7 +141,10 @@ const Index = () => {
     errors: [],
     suggestions: [],
     waypointCount: 0,
-    totalDistance: 0
+    totalDistance: 0,
+    estimatedDuration: 0,
+    batteriesRequired: 0,
+    automaticGimbalAngle: 0
   });
 
   const handleParametersChange = (newParams: Partial<MissionParameters>) => {
@@ -154,9 +156,9 @@ const Index = () => {
     toast.success('Centro de órbita establecido');
   };
 
-  const handlePOIChange = (poi: Coordinates) => {
-    setParameters(prev => ({ ...prev, poiLocation: poi }));
-    toast.success('Point of Interest establecido');
+  const handleOrbitStartChange = (location: Coordinates) => {
+    setParameters(prev => ({ ...prev, orbitStartLocation: location }));
+    toast.success('Punto de inicio orbital establecido');
   };
 
   const generateMission = () => {
@@ -262,7 +264,7 @@ const Index = () => {
               parameters={parameters}
               waypoints={waypoints}
               onCenterChange={handleCenterChange}
-              onPOIChange={handlePOIChange}
+              onOrbitStartChange={handleOrbitStartChange}
             />
           </div>
         </div>

@@ -39,9 +39,9 @@ export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
   // Calcular incremento angular
   const angleIncrement = totalAngle / actualWaypoints;
   
-  // Coordenadas POI (por defecto centro si no es personalizado)
-  const poiLat = params.customPOI && params.poiLocation ? params.poiLocation.lat : params.center.lat;
-  const poiLng = params.customPOI && params.poiLocation ? params.poiLocation.lng : params.center.lng;
+  // Coordenadas POI (siempre centro por defecto)
+  const poiLat = params.center.lat;
+  const poiLng = params.center.lng;
   
   
   // Determinar waypoints que tomarán fotos
@@ -92,9 +92,7 @@ export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
     // Calcular gimbal pitch para modo POI
     let gimbalPitch = 0;
     if (params.gimbalMode === 'poi') {
-      const poiAltitude = params.customPOI 
-        ? params.poiInitialAltitude + (params.poiFinalAltitude - params.poiInitialAltitude) * progress
-        : altitude;
+      const poiAltitude = params.defaultPoiAltitude;
       
       const horizontalDistance = radius;
       const verticalDistance = altitude - poiAltitude;
@@ -119,12 +117,10 @@ export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
       actionType1: takePhoto ? 1 : 0, // 1=take photo
       actionParam1: takePhoto ? 1 : 0,
       altitudeMode: 0, // 0=above sea level
-      speed: 5, // Default speed, configured in Litchi
+      speed: params.flightSpeed,
       poiLatitude: poiLat,
       poiLongitude: poiLng,
-      poiAltitude: params.customPOI 
-        ? params.poiInitialAltitude + (params.poiFinalAltitude - params.poiInitialAltitude) * progress
-        : altitude,
+      poiAltitude: params.defaultPoiAltitude,
       poiAltitudeMode: 0,
       photoTimeInterval: 0,
       photoDistInterval: 0,
@@ -144,7 +140,10 @@ export function validateMission(params: MissionParameters, waypoints: Waypoint[]
     errors: [],
     suggestions: [],
     waypointCount: waypoints.length,
-    totalDistance: 0
+    totalDistance: 0,
+    estimatedDuration: 0,
+    batteriesRequired: 0,
+    automaticGimbalAngle: 0
   };
   
   // Find selected drone
@@ -162,6 +161,23 @@ export function validateMission(params: MissionParameters, waypoints: Waypoint[]
       waypoints[i + 1].latitude, waypoints[i + 1].longitude
     );
     result.totalDistance += dist;
+  }
+
+  // Calculate estimated duration (flight time + photo time)
+  const flightTime = result.totalDistance / params.flightSpeed / 60; // minutes
+  const photoTime = params.imageCount * 0.5; // 0.5 min per photo
+  result.estimatedDuration = flightTime + photoTime;
+
+  // Calculate batteries required
+  result.batteriesRequired = Math.ceil(result.estimatedDuration / drone.batteryLife);
+
+  // Calculate automatic gimbal angle for POI mode
+  if (params.gimbalMode === 'poi' && params.center) {
+    const avgRadius = (params.initialRadius + params.finalRadius) / 2;
+    const avgAltitude = (params.initialAltitude + params.finalAltitude) / 2;
+    const verticalDistance = avgAltitude - params.defaultPoiAltitude;
+    result.automaticGimbalAngle = -Math.atan2(verticalDistance, avgRadius) * 180 / Math.PI;
+    result.automaticGimbalAngle = Math.max(-90, Math.min(30, result.automaticGimbalAngle));
   }
   
   // Validate waypoint count

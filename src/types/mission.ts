@@ -13,10 +13,9 @@ export interface MissionParameters {
   startAngle?: number;
   imageCount: number;
   waypointDistance: number;
-  customPOI: boolean;
-  poiLocation: Coordinates | null;
-  poiInitialAltitude: number;
-  poiFinalAltitude: number;
+  flightSpeed: number;
+  defaultPoiAltitude: number;
+  orbitStartLocation: Coordinates | null;
   gimbalMode: 'frontal' | 'poi';
   selectedDrone: string;
 }
@@ -55,6 +54,9 @@ export interface DroneModel {
     min: number;
     max: number;
   };
+  batteryLife: number; // minutes
+  weight: number; // grams
+  maxSpeed: number; // m/s
 }
 
 export interface ValidationResult {
@@ -64,4 +66,7 @@ export interface ValidationResult {
   suggestions: string[];
   waypointCount: number;
   totalDistance: number;
+  estimatedDuration: number; // minutes
+  batteriesRequired: number;
+  automaticGimbalAngle: number;
 }

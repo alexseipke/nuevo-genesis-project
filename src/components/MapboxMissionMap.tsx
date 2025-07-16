@@ -10,10 +10,10 @@ interface MapboxMissionMapProps {
   parameters: MissionParameters;
   waypoints: Waypoint[];
   onCenterChange: (center: Coordinates) => void;
-  onPOIChange: (poi: Coordinates) => void;
+  onOrbitStartChange: (location: Coordinates) => void;
 }
 
-export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIChange }: MapboxMissionMapProps) {
+export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbitStartChange }: MapboxMissionMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -39,14 +39,6 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
       // Añadir controles de navegación
       map.current?.addControl(new mapboxgl.NavigationControl(), 'top-right');
       
-      // Añadir fuente de datos de elevación para waypoints solamente
-      map.current?.addSource('mapbox-dem', {
-        type: 'raster-dem',
-        url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
-        tileSize: 512,
-        maxzoom: 14
-      });
-      
       // Event listener para clicks en el mapa
       map.current?.on('click', (e) => {
         const { lng, lat } = e.lngLat;
@@ -54,9 +46,9 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
         if (!parameters.center) {
           // Primer click establece el centro
           onCenterChange({ lat, lng });
-        } else if (parameters.customPOI && e.originalEvent.shiftKey) {
-          // Shift+Click establece POI si está habilitado
-          onPOIChange({ lat, lng });
+        } else if (e.originalEvent.ctrlKey || e.originalEvent.metaKey) {
+          // Ctrl+Click establece punto de inicio orbital
+          onOrbitStartChange({ lat, lng });
         }
       });
     });
@@ -111,11 +103,11 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
       }
     }
 
-    // Marcador del POI
-    if (parameters.customPOI && parameters.poiLocation) {
-      const poiEl = document.createElement('div');
-      poiEl.className = 'mapbox-marker';
-      poiEl.innerHTML = `
+    // Marcador del punto de inicio orbital
+    if (parameters.orbitStartLocation) {
+      const startEl = document.createElement('div');
+      startEl.className = 'mapbox-marker';
+      startEl.innerHTML = `
         <div style="
           width: 14px; 
           height: 14px; 
@@ -126,13 +118,13 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
         "></div>
       `;
 
-      new mapboxgl.Marker(poiEl)
-        .setLngLat([parameters.poiLocation.lng, parameters.poiLocation.lat])
+      new mapboxgl.Marker(startEl)
+        .setLngLat([parameters.orbitStartLocation.lng, parameters.orbitStartLocation.lat])
         .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`
           <div>
-            <strong>Point of Interest</strong><br/>
-            Lat: ${parameters.poiLocation.lat.toFixed(6)}<br/>
-            Lng: ${parameters.poiLocation.lng.toFixed(6)}
+            <strong>Punto de Inicio Orbital</strong><br/>
+            Lat: ${parameters.orbitStartLocation.lat.toFixed(6)}<br/>
+            Lng: ${parameters.orbitStartLocation.lng.toFixed(6)}
           </div>
         `))
         .addTo(map.current);
@@ -143,13 +135,7 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
       const waypointEl = document.createElement('div');
       waypointEl.className = 'mapbox-marker';
       
-      if (waypoint.takePhoto && parameters.poiLocation) {
-        // Calcular ángulo hacia el POI para la cámara
-        const bearing = Math.atan2(
-          parameters.poiLocation.lng - waypoint.longitude,
-          parameters.poiLocation.lat - waypoint.latitude
-        ) * 180 / Math.PI;
-        
+      if (waypoint.takePhoto) {
         waypointEl.innerHTML = `
           <div style="
             width: 12px; 
@@ -168,7 +154,7 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
               position: absolute;
               top: -2px;
               left: 50%;
-              transform: translateX(-50%) rotate(${bearing}deg);
+              transform: translateX(-50%);
               width: 0;
               height: 0;
               border-left: 2px solid transparent;
@@ -249,85 +235,7 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
       }
     }
 
-    // Círculos de radio inicial y final
-    if (parameters.center && parameters.initialRadius > 0) {
-      const center = [parameters.center.lng, parameters.center.lat];
-      
-      // Radio inicial
-      if (map.current.getSource('initial-radius')) {
-        (map.current.getSource('initial-radius') as mapboxgl.GeoJSONSource).setData(
-          createCircle(center, parameters.initialRadius)
-        );
-      } else {
-        map.current.addSource('initial-radius', {
-          type: 'geojson',
-          data: createCircle(center, parameters.initialRadius)
-        });
-
-        map.current.addLayer({
-          id: 'initial-radius',
-          type: 'line',
-          source: 'initial-radius',
-          paint: {
-            'line-color': '#3b82f6',
-            'line-width': 2,
-            'line-opacity': 0.5
-          }
-        });
-      }
-
-      // Radio final
-      if (parameters.finalRadius !== parameters.initialRadius) {
-        if (map.current.getSource('final-radius')) {
-          (map.current.getSource('final-radius') as mapboxgl.GeoJSONSource).setData(
-            createCircle(center, parameters.finalRadius)
-          );
-        } else {
-          map.current.addSource('final-radius', {
-            type: 'geojson',
-            data: createCircle(center, parameters.finalRadius)
-          });
-
-          map.current.addLayer({
-            id: 'final-radius',
-            type: 'line',
-            source: 'final-radius',
-            paint: {
-              'line-color': '#06b6d4',
-              'line-width': 2,
-              'line-opacity': 0.5
-            }
-          });
-        }
-      }
-    }
-
   }, [parameters, waypoints, mapLoaded]);
-
-  // Función para crear círculo GeoJSON
-  const createCircle = (center: number[], radiusInMeters: number) => {
-    const points = 64;
-    const coordinates = [];
-    const distanceX = radiusInMeters / (111000 * Math.cos(center[1] * Math.PI / 180));
-    const distanceY = radiusInMeters / 111000;
-
-    for (let i = 0; i < points; i++) {
-      const angle = (i / points) * 2 * Math.PI;
-      const x = center[0] + distanceX * Math.cos(angle);
-      const y = center[1] + distanceY * Math.sin(angle);
-      coordinates.push([x, y]);
-    }
-    coordinates.push(coordinates[0]); // Cerrar el círculo
-
-    return {
-      type: 'Feature' as const,
-      properties: {},
-      geometry: {
-        type: 'Polygon' as const,
-        coordinates: [coordinates]
-      }
-    };
-  };
 
   const toggle3D = () => {
     if (map.current) {
@@ -369,10 +277,10 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
         </div>
       )}
       
-      {parameters.center && parameters.customPOI && !parameters.poiLocation && (
+      {parameters.center && !parameters.orbitStartLocation && (
         <div className="absolute top-4 left-4 right-4 bg-white/95 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-gray-200">
           <p className="text-sm font-medium text-gray-800">
-            🎯 Mantén presionado Shift + Clic en el mapa para establecer el Point of Interest (POI)
+            🎯 Mantén presionado Ctrl + Clic en el mapa para establecer el punto de inicio orbital
           </p>
         </div>
       )}
@@ -384,6 +292,10 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-blue-500 rounded-full border border-white"></div>
             <span>Centro de Órbita</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-red-600 rounded-full border border-white"></div>
+            <span>Inicio Orbital</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-emerald-500 rounded-full border border-white"></div>

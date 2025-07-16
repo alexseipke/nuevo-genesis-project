@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +17,10 @@ import {
   Ruler,
   AlertTriangle,
   CheckCircle,
-  Info
+  Info,
+  Clock,
+  Battery,
+  Settings
 } from 'lucide-react';
 import { MissionParameters, ValidationResult } from '@/types/mission';
 import { DRONE_MODELS } from '@/data/drones';
@@ -32,17 +33,6 @@ interface ControlPanelProps {
 }
 
 export function ControlPanel({ parameters, onParametersChange, validation, onGenerateMission }: ControlPanelProps) {
-  const [expandedSections, setExpandedSections] = useState({
-    drone: true,
-    orbit: true,
-    poi: false,
-    camera: false
-  });
-
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
-
   const selectedDrone = DRONE_MODELS.find(d => d.id === parameters.selectedDrone);
 
   return (
@@ -79,9 +69,11 @@ export function ControlPanel({ parameters, onParametersChange, validation, onGen
             
             {selectedDrone && (
               <div className="text-xs text-muted-foreground space-y-1">
+                <div>Batería: {selectedDrone.batteryLife} min</div>
+                <div>Peso: {selectedDrone.weight}g</div>
+                <div>Vel. máx: {selectedDrone.maxSpeed} m/s</div>
                 <div>Max waypoints: {selectedDrone.maxWaypoints}</div>
                 <div>Max distancia: {selectedDrone.maxDistance/1000}km</div>
-                <div>Altitud: {selectedDrone.altitudeRange.min}m a {selectedDrone.altitudeRange.max}m</div>
               </div>
             )}
           </CardContent>
@@ -98,108 +90,117 @@ export function ControlPanel({ parameters, onParametersChange, validation, onGen
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="initial-radius" className="text-xs">Radio Inicial (m)</Label>
-                <Input
-                  id="initial-radius"
-                  type="number"
-                  value={parameters.initialRadius}
-                  onChange={(e) => onParametersChange({ initialRadius: Number(e.target.value) })}
-                  min="1"
-                  max="2000"
+                <Label className="text-xs">Radio Inicial: {parameters.initialRadius}m</Label>
+                <Slider
+                  value={[parameters.initialRadius]}
+                  onValueChange={([value]) => onParametersChange({ initialRadius: value })}
+                  min={1}
+                  max={2000}
+                  step={1}
+                  className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="final-radius" className="text-xs">Radio Final (m)</Label>
-                <Input
-                  id="final-radius"
-                  type="number"
-                  value={parameters.finalRadius}
-                  onChange={(e) => onParametersChange({ finalRadius: Number(e.target.value) })}
-                  min="1"
-                  max="2000"
+                <Label className="text-xs">Radio Final: {parameters.finalRadius}m</Label>
+                <Slider
+                  value={[parameters.finalRadius]}
+                  onValueChange={([value]) => onParametersChange({ finalRadius: value })}
+                  min={1}
+                  max={2000}
+                  step={1}
+                  className="mt-1"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="initial-alt" className="text-xs">Altura Inicial (m)</Label>
-                <Input
-                  id="initial-alt"
-                  type="number"
-                  value={parameters.initialAltitude}
-                  onChange={(e) => onParametersChange({ initialAltitude: Number(e.target.value) })}
-                  min="-200"
-                  max="500"
+                <Label className="text-xs">Altura Inicial: {parameters.initialAltitude}m</Label>
+                <Slider
+                  value={[parameters.initialAltitude]}
+                  onValueChange={([value]) => onParametersChange({ initialAltitude: value })}
+                  min={-200}
+                  max={500}
+                  step={1}
+                  className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="final-alt" className="text-xs">Altura Final (m)</Label>
-                <Input
-                  id="final-alt"
-                  type="number"
-                  value={parameters.finalAltitude}
-                  onChange={(e) => onParametersChange({ finalAltitude: Number(e.target.value) })}
-                  min="-200"
-                  max="500"
+                <Label className="text-xs">Altura Final: {parameters.finalAltitude}m</Label>
+                <Slider
+                  value={[parameters.finalAltitude]}
+                  onValueChange={([value]) => onParametersChange({ finalAltitude: value })}
+                  min={-200}
+                  max={500}
+                  step={1}
+                  className="mt-1"
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="rotations" className="text-xs">Rotaciones</Label>
-              <Input
-                id="rotations"
-                type="number"
-                value={parameters.rotations}
-                onChange={(e) => onParametersChange({ rotations: Number(e.target.value) })}
-                min="0.1"
-                max="10"
-                step="0.1"
+              <Label className="text-xs">Rotaciones: {parameters.rotations}</Label>
+              <Slider
+                value={[parameters.rotations]}
+                onValueChange={([value]) => onParametersChange({ rotations: value })}
+                min={0.1}
+                max={10}
+                step={0.1}
+                className="mt-1"
               />
             </div>
 
             <div>
-              <Label htmlFor="start-angle" className="text-xs">Ángulo de inicio (°)</Label>
-              <Input
-                id="start-angle"
-                type="number"
-                value={parameters.startAngle || 0}
-                onChange={(e) => onParametersChange({ startAngle: Number(e.target.value) })}
-                min="0"
-                max="359"
-                step="1"
+              <Label className="text-xs">Ángulo de inicio: {parameters.startAngle || 0}°</Label>
+              <Slider
+                value={[parameters.startAngle || 0]}
+                onValueChange={([value]) => onParametersChange({ startAngle: value })}
+                min={0}
+                max={359}
+                step={1}
+                className="mt-1"
               />
             </div>
 
             <div>
-              <Label htmlFor="waypoint-distance" className="text-xs">Distancia entre Waypoints (m)</Label>
-              <Input
-                id="waypoint-distance"
-                type="number"
-                value={parameters.waypointDistance}
-                onChange={(e) => onParametersChange({ waypointDistance: Number(e.target.value) })}
-                min="1"
-                max="50"
-                step="1"
+              <Label className="text-xs">Distancia entre Waypoints: {parameters.waypointDistance}m</Label>
+              <Slider
+                value={[parameters.waypointDistance]}
+                onValueChange={([value]) => onParametersChange({ waypointDistance: value })}
+                min={1}
+                max={50}
+                step={1}
+                className="mt-1"
               />
             </div>
 
             <div>
-              <Label htmlFor="images" className="text-xs">Cantidad de Imágenes</Label>
-              <Input
-                id="images"
-                type="number"
-                value={parameters.imageCount}
-                onChange={(e) => onParametersChange({ imageCount: Number(e.target.value) })}
-                min="0"
-                max="99"
+              <Label className="text-xs">Velocidad de vuelo: {parameters.flightSpeed} m/s</Label>
+              <Slider
+                value={[parameters.flightSpeed]}
+                onValueChange={([value]) => onParametersChange({ flightSpeed: value })}
+                min={1}
+                max={selectedDrone ? selectedDrone.maxSpeed : 25}
+                step={1}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs">Cantidad de Imágenes: {parameters.imageCount}</Label>
+              <Slider
+                value={[parameters.imageCount]}
+                onValueChange={([value]) => onParametersChange({ imageCount: value })}
+                min={0}
+                max={99}
+                step={1}
+                className="mt-1"
               />
             </div>
           </CardContent>
         </Card>
 
-        {/* POI Configuration */}
+        {/* Point of Interest */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-sm">
@@ -208,49 +209,21 @@ export function ControlPanel({ parameters, onParametersChange, validation, onGen
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="custom-poi" className="text-xs">POI Personalizado</Label>
-              <Switch
-                id="custom-poi"
-                checked={parameters.customPOI}
-                onCheckedChange={(checked) => onParametersChange({ customPOI: checked })}
+            <div>
+              <Label className="text-xs">Altura POI por defecto: {parameters.defaultPoiAltitude}m</Label>
+              <Slider
+                value={[parameters.defaultPoiAltitude]}
+                onValueChange={([value]) => onParametersChange({ defaultPoiAltitude: value })}
+                min={0}
+                max={500}
+                step={1}
+                className="mt-1"
               />
             </div>
-
-            {parameters.customPOI && (
-              <div className="space-y-3 pt-2 border-t border-border">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="poi-initial-alt" className="text-xs">Altura Inicial POI (m)</Label>
-                    <Input
-                      id="poi-initial-alt"
-                      type="number"
-                      value={parameters.poiInitialAltitude}
-                      onChange={(e) => onParametersChange({ poiInitialAltitude: Number(e.target.value) })}
-                      min="-200"
-                      max="500"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="poi-final-alt" className="text-xs">Altura Final POI (m)</Label>
-                    <Input
-                      id="poi-final-alt"
-                      type="number"
-                      value={parameters.poiFinalAltitude}
-                      onChange={(e) => onParametersChange({ poiFinalAltitude: Number(e.target.value) })}
-                      min="-200"
-                      max="500"
-                    />
-                  </div>
-                </div>
-                
-                {!parameters.poiLocation && (
-                  <p className="text-xs text-muted-foreground">
-                    Shift + Clic en el mapa para establecer la ubicación del POI
-                  </p>
-                )}
-              </div>
-            )}
+            
+            <p className="text-xs text-muted-foreground">
+              Ctrl + Clic en el mapa para establecer punto de inicio orbital
+            </p>
           </CardContent>
         </Card>
 
@@ -278,6 +251,12 @@ export function ControlPanel({ parameters, onParametersChange, validation, onGen
                 </SelectContent>
               </Select>
             </div>
+            
+            {parameters.gimbalMode === 'poi' && (
+              <div className="text-xs text-muted-foreground space-y-1">
+                <div>Ángulo gimbal automático: {validation.automaticGimbalAngle.toFixed(1)}°</div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -293,11 +272,25 @@ export function ControlPanel({ parameters, onParametersChange, validation, onGen
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
                 <div className="text-muted-foreground">Waypoints</div>
-                <div className="font-medium">{validation.waypointCount}/99</div>
+                <div className="font-medium">{validation.waypointCount}/{selectedDrone?.maxWaypoints || 99}</div>
               </div>
               <div>
                 <div className="text-muted-foreground">Distancia</div>
                 <div className="font-medium">{(validation.totalDistance / 1000).toFixed(1)}km</div>
+              </div>
+              <div>
+                <div className="text-muted-foreground flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  Duración
+                </div>
+                <div className="font-medium">{validation.estimatedDuration.toFixed(1)} min</div>
+              </div>
+              <div>
+                <div className="text-muted-foreground flex items-center gap-1">
+                  <Battery className="w-3 h-3" />
+                  Baterías
+                </div>
+                <div className="font-medium">{validation.batteriesRequired.toFixed(1)}</div>
               </div>
             </div>
 

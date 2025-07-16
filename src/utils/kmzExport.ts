@@ -24,7 +24,7 @@ export function exportToKMZ(waypoints: Waypoint[], parameters: MissionParameters
 
 function generateKML(waypoints: Waypoint[], parameters: MissionParameters): string {
   const centerCoords = parameters.center;
-  const poiCoords = parameters.poiLocation;
+  const poiCoords = centerCoords;
   
   // Calcular altitudes relativas al suelo (usar altitud del terreno como base)
   const takeoffAltitude = 0; // Base del terreno
@@ -97,7 +97,7 @@ function generateKML(waypoints: Waypoint[], parameters: MissionParameters): stri
       <styleUrl>#centerStyle</styleUrl>
       <Point>
         <altitudeMode>relativeToGround</altitudeMode>
-        <coordinates>${poiCoords.lng},${poiCoords.lat},${parameters.poiInitialAltitude - takeoffAltitude}</coordinates>
+        <coordinates>${poiCoords.lng},${poiCoords.lat},${parameters.defaultPoiAltitude - takeoffAltitude}</coordinates>
       </Point>
     </Placemark>`;
   }
