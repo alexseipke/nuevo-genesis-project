@@ -86,6 +86,27 @@ interface ControlPanelProps {
   waypoints: any[]; // Agregar waypoints para mostrar el estado
 }
 
+// Función para calcular el número de bandas basado en FOV y parámetros
+function calculateStripCount(params: MissionParameters, drone: any): number {
+  if (!drone || !params.corridorAltitude) return 0;
+  
+  const altitude = params.corridorAltitude;
+  const fovHorizontal = drone.fovHorizontal * (Math.PI / 180); // convertir a radianes
+  const sideOverlap = (params.sideOverlap || 60) / 100;
+  const corridorWidth = params.corridorWidth || 100;
+  
+  // Calcular la cobertura en el suelo del FOV horizontal
+  const groundCoverageWidth = 2 * altitude * Math.tan(fovHorizontal / 2);
+  
+  // Calcular la distancia efectiva entre bandas (considerando overlap)
+  const effectiveStripWidth = groundCoverageWidth * (1 - sideOverlap);
+  
+  // Calcular número de bandas necesarias
+  const stripCount = Math.ceil(corridorWidth / effectiveStripWidth);
+  
+  return stripCount;
+}
+
 export function ControlPanel({ parameters, onParametersChange, validation, selectedMissionType, onMissionTypeSelect, waypoints }: ControlPanelProps) {
   const selectedDrone = DRONE_MODELS.find(d => d.id === parameters.selectedDrone);
   const [openCategories, setOpenCategories] = useState<string[]>([]);
@@ -474,6 +495,15 @@ export function ControlPanel({ parameters, onParametersChange, validation, selec
                       className="mt-1"
                     />
                   </div>
+                  
+                  {selectedDrone && parameters.corridorAltitude && (
+                    <div className="text-xs text-muted-foreground space-y-1 p-3 bg-muted/30 rounded-lg">
+                      <div className="font-medium text-foreground mb-2">Información de Vuelo:</div>
+                      <div>FOV H: {selectedDrone.fovHorizontal}° / V: {selectedDrone.fovVertical}°</div>
+                      <div>Resolución: {selectedDrone.imageWidth}x{selectedDrone.imageHeight}</div>
+                      <div>Bandas calculadas: {calculateStripCount(parameters, selectedDrone)}</div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </>

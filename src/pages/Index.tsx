@@ -265,9 +265,13 @@ const Index = () => {
     if (selectedMissionType === 'orbita-inteligente' && parameters.center) {
       const newWaypoints = calculateOrbitWaypoints(parameters);
       setWaypoints(newWaypoints);
-    } else if (selectedMissionType === 'corredor-inteligente' && parameters.corridorPoints.length >= 2) {
+    } else if (selectedMissionType === 'corredor-inteligente' && parameters.corridorPoints.length >= 2 && parameters.corridorAltitude) {
+      // Solo generar waypoints cuando el eje esté completo Y se haya definido la altura
       const newWaypoints = calculateCorridorWaypoints(parameters);
       setWaypoints(newWaypoints);
+    } else if (selectedMissionType === 'corredor-inteligente' && (parameters.corridorPoints.length < 2 || !parameters.corridorAltitude)) {
+      // Limpiar waypoints mientras se dibuja el eje o faltan parámetros
+      setWaypoints([]);
     }
   }, [parameters, selectedMissionType]);
 

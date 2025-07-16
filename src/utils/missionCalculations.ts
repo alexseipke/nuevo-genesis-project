@@ -6,32 +6,38 @@ export function calculateCorridorWaypoints(params: MissionParameters): Waypoint[
   if (params.corridorPoints.length < 2) return [];
   
   const waypoints: Waypoint[] = [];
-  const { corridorPoints, corridorWidth = 50, frontOverlap = 80, sideOverlap = 60, corridorAltitude = 50, flightSpeed } = params;
+  const { corridorPoints, corridorWidth = 100, frontOverlap = 80, sideOverlap = 60, corridorAltitude = 50, flightSpeed } = params;
   
   // Encontrar el drone seleccionado para obtener datos de cámara
   const drone = DRONE_MODELS.find(d => d.id === params.selectedDrone);
   if (!drone) return [];
   
-  // Calcular la distancia entre fotos basada en el solapamiento frontal
-  // Asumiendo un campo de visión típico para drones DJI
-  const groundSampleDistance = 0.05; // 5cm/pixel aproximado a 50m altura
-  const imageWidth = 4000; // pixels típicos
-  const imageHeight = 3000; // pixels típicos
+  // Usar FOV real del drone para calcular cobertura en el suelo
+  const fovHorizontal = drone.fovHorizontal * (Math.PI / 180); // convertir a radianes
+  const fovVertical = drone.fovVertical * (Math.PI / 180);
   
-  const groundCoverageWidth = imageWidth * groundSampleDistance;
-  const groundCoverageLength = imageHeight * groundSampleDistance;
+  // Calcular cobertura en el suelo usando FOV y altura
+  const groundCoverageWidth = 2 * corridorAltitude * Math.tan(fovHorizontal / 2);
+  const groundCoverageLength = 2 * corridorAltitude * Math.tan(fovVertical / 2);
   
-  const photoDistance = groundCoverageLength * (1 - frontOverlap / 100);
-  const passDistance = groundCoverageWidth * (1 - sideOverlap / 100);
+  // Calcular distancias efectivas considerando overlaps
+  const effectiveStripWidth = groundCoverageWidth * (1 - sideOverlap / 100);
+  const effectivePhotoDistance = groundCoverageLength * (1 - frontOverlap / 100);
   
-  // Calcular número de pasadas necesarias
-  const passesNeeded = Math.ceil(corridorWidth / passDistance);
+  // Calcular número de bandas necesarias para cubrir el ancho del corredor
+  const numStrips = Math.ceil(corridorWidth / effectiveStripWidth);
   
-  // Generar waypoints para cada pasada
-  for (let passIndex = 0; passIndex < passesNeeded; passIndex++) {
-    const offsetDistance = (passIndex - (passesNeeded - 1) / 2) * passDistance;
+  // Crear bandas paralelas al eje del corredor
+  const strips: Coordinates[][] = [];
+  
+  for (let stripIndex = 0; stripIndex < numStrips; stripIndex++) {
+    // Calcular offset desde el centro del corredor
+    const offsetFromCenter = (stripIndex - (numStrips - 1) / 2) * effectiveStripWidth;
     
-    // Generar waypoints a lo largo del corredor para esta pasada
+    // Crear puntos para esta banda
+    const stripPoints: Coordinates[] = [];
+    
+    // Procesar cada segmento del eje del corredor
     for (let i = 0; i < corridorPoints.length - 1; i++) {
       const startPoint = corridorPoints[i];
       const endPoint = corridorPoints[i + 1];
@@ -40,48 +46,80 @@ export function calculateCorridorWaypoints(params: MissionParameters): Waypoint[
       const bearing = calculateBearing(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
       const perpendicularBearing = (bearing + 90) % 360;
       
-      // Calcular distancia del segmento
-      const segmentDistance = calculateDistance(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
+      // Calcular puntos del segmento con offset perpendicular
+      const offsetStart = moveCoordinate(startPoint.lat, startPoint.lng, perpendicularBearing, offsetFromCenter);
+      const offsetEnd = moveCoordinate(endPoint.lat, endPoint.lng, perpendicularBearing, offsetFromCenter);
       
-      // Número de fotos en este segmento
-      const photosInSegment = Math.ceil(segmentDistance / photoDistance);
-      
-      for (let photoIndex = 0; photoIndex <= photosInSegment; photoIndex++) {
-        const progress = photoIndex / photosInSegment;
-        
-        // Interpolar posición a lo largo del segmento
-        const lat = startPoint.lat + (endPoint.lat - startPoint.lat) * progress;
-        const lng = startPoint.lng + (endPoint.lng - startPoint.lng) * progress;
-        
-        // Aplicar offset perpendicular para la pasada
-        const offsetCoords = moveCoordinate(lat, lng, perpendicularBearing, offsetDistance);
-        
-        const waypoint: Waypoint = {
-          id: waypoints.length + 1,
-          latitude: offsetCoords.lat,
-          longitude: offsetCoords.lng,
-          altitude: corridorAltitude,
-          heading: bearing,
-          curveSize: 0,
-          rotationDir: 0,
-          gimbalMode: 0,
-          gimbalPitchAngle: -90, // Cámara hacia abajo
-          actionType1: 1, // Tomar foto
-          actionParam1: 1,
-          altitudeMode: 0,
-          speed: flightSpeed,
-          poiLatitude: offsetCoords.lat,
-          poiLongitude: offsetCoords.lng,
-          poiAltitude: 0,
-          poiAltitudeMode: 0,
-          photoTimeInterval: 0,
-          photoDistInterval: photoDistance,
-          takePhoto: true
-        };
-        
-        waypoints.push(waypoint);
+      // Agregar punto inicial del segmento (solo si es el primer segmento o no es duplicado)
+      if (i === 0 || stripPoints.length === 0) {
+        stripPoints.push(offsetStart);
       }
+      
+      // Calcular distancia del segmento
+      const segmentDistance = calculateDistance(offsetStart.lat, offsetStart.lng, offsetEnd.lat, offsetEnd.lng);
+      
+      // Calcular puntos intermedios si el segmento es largo
+      const numIntermediatePoints = Math.floor(segmentDistance / effectivePhotoDistance);
+      
+      for (let pointIndex = 1; pointIndex <= numIntermediatePoints; pointIndex++) {
+        const progress = pointIndex / (numIntermediatePoints + 1);
+        const intermediateLat = offsetStart.lat + (offsetEnd.lat - offsetStart.lat) * progress;
+        const intermediateLng = offsetStart.lng + (offsetEnd.lng - offsetStart.lng) * progress;
+        stripPoints.push({ lat: intermediateLat, lng: intermediateLng });
+      }
+      
+      // Agregar punto final del segmento
+      stripPoints.push(offsetEnd);
     }
+    
+    strips.push(stripPoints);
+  }
+  
+  // Optimizar ruta: alternar dirección en bandas pares/impares (patrón serpentine)
+  for (let stripIndex = 0; stripIndex < strips.length; stripIndex++) {
+    const strip = strips[stripIndex];
+    const isEvenStrip = stripIndex % 2 === 0;
+    
+    // Invertir dirección en bandas impares para crear patrón serpentine
+    const orderedPoints = isEvenStrip ? strip : [...strip].reverse();
+    
+    orderedPoints.forEach((point, pointIndex) => {
+      // Calcular heading hacia el siguiente punto
+      let heading = 0;
+      if (pointIndex < orderedPoints.length - 1) {
+        const nextPoint = orderedPoints[pointIndex + 1];
+        heading = calculateBearing(point.lat, point.lng, nextPoint.lat, nextPoint.lng);
+      } else if (pointIndex > 0) {
+        // Para el último punto, usar el heading del segmento anterior
+        const prevPoint = orderedPoints[pointIndex - 1];
+        heading = calculateBearing(prevPoint.lat, prevPoint.lng, point.lat, point.lng);
+      }
+      
+      const waypoint: Waypoint = {
+        id: waypoints.length + 1,
+        latitude: point.lat,
+        longitude: point.lng,
+        altitude: corridorAltitude,
+        heading: heading,
+        curveSize: 0,
+        rotationDir: 0,
+        gimbalMode: 0,
+        gimbalPitchAngle: -90, // Cámara hacia abajo
+        actionType1: 1, // Tomar foto
+        actionParam1: 1,
+        altitudeMode: 0,
+        speed: flightSpeed,
+        poiLatitude: point.lat,
+        poiLongitude: point.lng,
+        poiAltitude: 0,
+        poiAltitudeMode: 0,
+        photoTimeInterval: 0,
+        photoDistInterval: effectivePhotoDistance,
+        takePhoto: true
+      };
+      
+      waypoints.push(waypoint);
+    });
   }
   
   return waypoints;

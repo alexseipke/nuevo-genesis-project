@@ -61,6 +61,11 @@ export interface DroneModel {
   batteryLife: number; // minutes
   weight: number; // grams
   maxSpeed: number; // m/s
+  // FOV datos de cámara
+  fovHorizontal: number; // degrees
+  fovVertical: number; // degrees
+  imageWidth: number; // pixels
+  imageHeight: number; // pixels
 }
 
 export interface ValidationResult {
