@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PromoBanner } from '@/components/PromoBanner';
 import { ControlPanel } from '@/components/ControlPanel';
 import { MapboxMissionMap } from '@/components/MapboxMissionMap';
 import { MissionParameters, Coordinates, Waypoint, ValidationResult } from '@/types/mission';
@@ -278,6 +279,11 @@ const Index = () => {
 
   return (
     <div className="h-screen flex flex-col bg-gradient-sky">
+      <PromoBanner 
+        onExportKMZ={exportMissionKMZ}
+        onExportLitchi={exportMissionLitchi}
+        canExport={validation.isValid && waypoints.length > 0}
+      />
       <div className="flex-1 flex overflow-hidden">
         <ControlPanel
           parameters={parameters}

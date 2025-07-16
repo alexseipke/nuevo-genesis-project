@@ -1,10 +1,16 @@
-import { Plane } from 'lucide-react';
+import { Plane, Download, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
-interface PromoBannerProps {}
+interface PromoBannerProps {
+  onExportKMZ?: () => void;
+  onExportLitchi?: () => void;
+  canExport?: boolean;
+}
 
-export function PromoBanner({}: PromoBannerProps) {
+export function PromoBanner({ onExportKMZ, onExportLitchi, canExport = false }: PromoBannerProps) {
   return (
-    <div className="bg-card border-b border-border shadow-card">
+    <div className="sticky top-0 z-50 bg-card border-b border-border shadow-card">
       <div className="container mx-auto px-6 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
@@ -31,9 +37,28 @@ export function PromoBanner({}: PromoBannerProps) {
             </p>
           </div>
           
-          {/* Botones de acción - se pueden agregar desde ControlPanel si es necesario */}
+          {/* Botones de exportación */}
           <div className="flex items-center gap-3">
-            {/* Los botones de exportar se moverán al ControlPanel */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  disabled={!canExport}
+                  className="bg-gradient-primary hover:opacity-90 transition-opacity"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Exportar
+                  <ChevronDown className="w-4 h-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="z-50 bg-card border border-border shadow-lg">
+                <DropdownMenuItem onClick={onExportKMZ} className="hover:bg-muted">
+                  Exportar KMZ (Google Earth)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onExportLitchi} className="hover:bg-muted">
+                  Exportar CSV Litchi
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
