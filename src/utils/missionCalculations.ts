@@ -76,26 +76,42 @@ export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
       waypointDistances.push(totalPathDistance);
     }
     
-    // Calcular intervalos equidistantes para las fotos
-    const photoInterval = totalPathDistance / (params.imageCount + 1); // +1 para no poner foto al final
-    
-    for (let i = 1; i <= params.imageCount; i++) {
-      const targetDistance = photoInterval * i;
-      
-      // Encontrar el waypoint más cercano a esta distancia objetivo
+    // Distribuir fotos desde el inicio hasta el final del recorrido
+    if (params.imageCount === 1) {
+      // Si solo hay una foto, ponerla en el medio del recorrido
+      const midDistance = totalPathDistance / 2;
       let bestWaypointIndex = 0;
-      let minDistanceDiff = Math.abs(waypointDistances[0] - targetDistance);
+      let minDistanceDiff = Math.abs(waypointDistances[0] - midDistance);
       
       for (let j = 1; j < waypointDistances.length; j++) {
-        const distanceDiff = Math.abs(waypointDistances[j] - targetDistance);
+        const distanceDiff = Math.abs(waypointDistances[j] - midDistance);
         if (distanceDiff < minDistanceDiff) {
           minDistanceDiff = distanceDiff;
           bestWaypointIndex = j;
         }
       }
-      
-      if (bestWaypointIndex < actualWaypoints) {
-        photoWaypoints.add(bestWaypointIndex);
+      photoWaypoints.add(bestWaypointIndex);
+    } else {
+      // Para múltiples fotos, distribuir desde inicio hasta final
+      for (let i = 0; i < params.imageCount; i++) {
+        const progress = i / (params.imageCount - 1); // De 0 a 1
+        const targetDistance = totalPathDistance * progress;
+        
+        // Encontrar el waypoint más cercano a esta distancia objetivo
+        let bestWaypointIndex = 0;
+        let minDistanceDiff = Math.abs(waypointDistances[0] - targetDistance);
+        
+        for (let j = 1; j < waypointDistances.length; j++) {
+          const distanceDiff = Math.abs(waypointDistances[j] - targetDistance);
+          if (distanceDiff < minDistanceDiff) {
+            minDistanceDiff = distanceDiff;
+            bestWaypointIndex = j;
+          }
+        }
+        
+        if (bestWaypointIndex < actualWaypoints) {
+          photoWaypoints.add(bestWaypointIndex);
+        }
       }
     }
   }
