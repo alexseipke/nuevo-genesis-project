@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { PromoBanner } from '@/components/PromoBanner';
+import { MissionHeader } from '@/components/MissionHeader';
 import { ControlPanel } from '@/components/ControlPanel';
 import { MapboxMissionMap } from '@/components/MapboxMissionMap';
 import { MissionParameters, Coordinates, Waypoint, ValidationResult } from '@/types/mission';
@@ -7,6 +7,10 @@ import { calculateOrbitWaypoints, calculateCorridorWaypoints, validateMission } 
 import { exportToKMZ } from '@/utils/kmzExport';
 import { exportToLitchiCSV } from '@/utils/csvExport';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { ProjectManager } from '@/components/ProjectManager';
+import { Project } from '@/hooks/useProjects';
 
 // Componente de mapa simple sin Leaflet
 function SimpleMap({ parameters, waypoints, onCenterChange }: {
@@ -114,6 +118,8 @@ function SimpleMap({ parameters, waypoints, onCenterChange }: {
 }
 
 const Index = () => {
+  const { user, canExport } = useAuth();
+  const navigate = useNavigate();
   const [selectedMissionType, setSelectedMissionType] = useState<string | null>(null);
   const [parameters, setParameters] = useState<MissionParameters>({
     center: null,
@@ -210,8 +216,19 @@ const Index = () => {
   };
 
   const exportMissionKMZ = async () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
     if (waypoints.length === 0) {
       toast.error('Genera primero una misión');
+      return;
+    }
+
+    if (!canExport) {
+      toast.error('Has alcanzado el límite de exportaciones gratuitas. Se cobrará $0.25 por esta exportación.');
+      // TODO: Implementar lógica de pago
       return;
     }
 
@@ -229,6 +246,7 @@ const Index = () => {
       document.body.removeChild(link);
       
       toast.success('Misión KMZ exportada para Google Earth Pro');
+      // TODO: Incrementar contador de exportaciones
     } catch (error) {
       console.error('Error exporting mission:', error);
       toast.error('Error al exportar la misión');
@@ -237,8 +255,19 @@ const Index = () => {
 
 
   const exportMissionLitchi = () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
     if (waypoints.length === 0) {
       toast.error("No hay waypoints para exportar");
+      return;
+    }
+
+    if (!canExport) {
+      toast.error('Has alcanzado el límite de exportaciones gratuitas. Se cobrará $0.25 por esta exportación.');
+      // TODO: Implementar lógica de pago
       return;
     }
 
@@ -254,10 +283,17 @@ const Index = () => {
       URL.revokeObjectURL(url);
       
       toast.success("Misión exportada para Litchi exitosamente");
+      // TODO: Incrementar contador de exportaciones
     } catch (error) {
       console.error('Error exporting to Litchi CSV:', error);
       toast.error("Error al exportar la misión");
     }
+  };
+
+  const handleLoadProject = (project: Project) => {
+    setSelectedMissionType(project.mission_type);
+    setParameters(project.parameters);
+    toast.success(`Proyecto "${project.name}" cargado correctamente`);
   };
 
   // Auto-generate mission when parameters change
@@ -283,20 +319,28 @@ const Index = () => {
 
   return (
     <div className="h-screen flex flex-col bg-gradient-sky">
-      <PromoBanner 
+      <MissionHeader 
         onExportKMZ={exportMissionKMZ}
         onExportLitchi={exportMissionLitchi}
-        canExport={validation.isValid && waypoints.length > 0}
+        canExport={validation.isValid && waypoints.length > 0 && canExport}
+        missionType={selectedMissionType || undefined}
       />
       <div className="flex-1 flex overflow-hidden">
-        <ControlPanel
-          parameters={parameters}
-          onParametersChange={handleParametersChange}
-          validation={validation}
-          selectedMissionType={selectedMissionType}
-          onMissionTypeSelect={setSelectedMissionType}
-          waypoints={waypoints}
-        />
+        <div className="space-y-4">
+          <ProjectManager
+            currentMissionType={selectedMissionType}
+            currentParameters={parameters}
+            onLoadProject={handleLoadProject}
+          />
+          <ControlPanel
+            parameters={parameters}
+            onParametersChange={handleParametersChange}
+            validation={validation}
+            selectedMissionType={selectedMissionType}
+            onMissionTypeSelect={setSelectedMissionType}
+            waypoints={waypoints}
+          />
+        </div>
         
         <div className="flex-1 p-4">
           <div className="h-full rounded-lg overflow-hidden shadow-mission">
