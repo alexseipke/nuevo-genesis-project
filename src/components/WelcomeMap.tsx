@@ -84,9 +84,9 @@ export function WelcomeMap() {
       
       {/* Overlay con texto de bienvenida */}
       <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-        <div className="text-center bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl max-w-md animate-fade-in">
-          <div className="mb-6">
-            <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-primary via-primary-glow to-primary mb-4 shadow-lg animate-pulse">
+        <div className="text-center bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl max-w-2xl w-full mx-4 animate-fade-in">
+          <div className="flex items-center justify-center gap-8 mb-6">
+            <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-primary via-primary-glow to-primary shadow-lg animate-pulse">
               {/* Círculos concéntricos animados */}
               <div className="absolute inset-0 rounded-full border-2 border-white/40 animate-ping"></div>
               <div className="absolute inset-2 rounded-full border-2 border-white/30 animate-ping" style={{ animationDelay: '0.5s' }}></div>
@@ -96,15 +96,25 @@ export function WelcomeMap() {
                 <Target size={32} className="animate-pulse" strokeWidth={2.5} />
               </div>
             </div>
+            <div className="text-left">
+              <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg">
+                Bienvenido a Planner-Viizor
+              </h1>
+              <p className="text-xl text-white/90 drop-shadow-md">
+                ¡Vuele en el campo y planifique en su escritorio!
+              </p>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">
-            Bienvenido a Planner-Viizor
-          </h1>
-          <p className="text-xl text-white/90 mb-6 drop-shadow-md">
-            ¡Vuele en el campo y planifique en su escritorio!
-          </p>
-          <div className="text-sm text-white/80 bg-black/20 rounded-lg px-4 py-2 backdrop-blur-sm">
-            Selecciona un tipo de misión en el panel izquierdo para comenzar
+          <div className="relative overflow-hidden bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 rounded-lg px-6 py-3 shadow-lg">
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 animate-pulse opacity-20"></div>
+            <div className="relative z-10 text-sm font-semibold text-white animate-bounce">
+              ✨ Selecciona un tipo de misión en el panel izquierdo para comenzar ✨
+            </div>
+            {/* Efecto de brillo que se mueve */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 animate-[slide_2s_ease-in-out_infinite]" style={{ 
+              animation: 'slide 2s ease-in-out infinite',
+              animationDelay: '1s'
+            }}></div>
           </div>
         </div>
       </div>
