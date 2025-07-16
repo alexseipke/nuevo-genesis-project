@@ -267,7 +267,7 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
       
       {/* Instrucciones overlay */}
       {!parameters.center && (
-        <div className="absolute top-4 left-4 right-4 bg-white/95 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-gray-200">
+        <div className="absolute top-20 left-4 right-4 bg-white/95 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-gray-200">
           <p className="text-sm font-medium text-gray-800">
             📍 Haz clic en el mapa para establecer el centro de la órbita
           </p>

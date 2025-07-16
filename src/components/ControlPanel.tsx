@@ -202,34 +202,32 @@ export function ControlPanel({ parameters, onParametersChange, validation }: Con
         </Card>
 
 
-        {/* Camera & Gimbal */}
+        {/* Camera & Target */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-sm">
               <Camera className="w-4 h-4" />
-              Cámara y Gimbal
+              Altura de Objetivo
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <Label className="text-xs">Modo de Gimbal</Label>
-              <Select
-                value={parameters.gimbalMode}
-                onValueChange={(value: 'frontal' | 'poi' | 'horizontal' | 'manual') => onParametersChange({ gimbalMode: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="frontal">Frontal (0° pitch)</SelectItem>
-                  <SelectItem value="poi">Seguir POI</SelectItem>
-                  <SelectItem value="horizontal">Horizontal (-90°)</SelectItem>
-                  <SelectItem value="manual">Control Manual</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label className="text-xs">Altura del Objetivo (m)</Label>
+              <Input
+                type="number"
+                value={parameters.targetAltitude || ''}
+                onChange={(e) => onParametersChange({ targetAltitude: e.target.value ? Number(e.target.value) : undefined })}
+                placeholder="Sin definir (cámara horizontal)"
+                min={-200}
+                max={500}
+                className="mt-1"
+              />
+              <div className="text-xs text-muted-foreground mt-1">
+                Si se define, la cámara apuntará automáticamente a esta altura
+              </div>
             </div>
             
-            {parameters.gimbalMode === 'poi' && (
+            {parameters.targetAltitude !== undefined && (
               <div className="text-xs text-muted-foreground space-y-1">
                 <div>Ángulo gimbal automático: {(validation.automaticGimbalAngle || 0).toFixed(1)}°</div>
               </div>
