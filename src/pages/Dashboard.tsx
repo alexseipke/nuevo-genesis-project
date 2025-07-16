@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Header } from '@/components/Header';
+import { PromoBanner } from '@/components/PromoBanner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,7 @@ const Dashboard = () => {
   if (!user || !profile || !usage) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
+        <PromoBanner canExport={false} />
         <div className="container mx-auto pt-20 px-4">
           <div className="text-center">
             <p className="text-muted-foreground">Cargando dashboard...</p>
@@ -28,7 +28,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <PromoBanner canExport={false} />
       <div className="container mx-auto pt-20 px-4 space-y-6">
         {/* Welcome Section */}
         <div className="text-center space-y-2">

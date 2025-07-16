@@ -1,6 +1,8 @@
-import { Target, Download, ChevronDown } from 'lucide-react';
+import { Target, Download, ChevronDown, User, LogOut, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface PromoBannerProps {
   onExportKMZ?: () => void;
@@ -9,6 +11,8 @@ interface PromoBannerProps {
 }
 
 export function PromoBanner({ onExportKMZ, onExportLitchi, canExport = false }: PromoBannerProps) {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   return (
     <div className="sticky top-0 z-50 bg-card border-b border-border shadow-card">
       <div className="container mx-auto px-6 py-3">
@@ -37,7 +41,7 @@ export function PromoBanner({ onExportKMZ, onExportLitchi, canExport = false }: 
             </p>
           </div>
           
-          {/* Botones de exportación */}
+          {/* Botones de exportación y usuario */}
           <div className="flex items-center gap-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -59,6 +63,32 @@ export function PromoBanner({ onExportKMZ, onExportLitchi, canExport = false }: 
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            
+            {/* Menú de usuario */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <User className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="z-50 bg-card border border-border shadow-lg">
+                  <DropdownMenuItem onClick={() => navigate('/dashboard')} className="hover:bg-muted">
+                    <LayoutDashboard className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOut} className="hover:bg-muted text-destructive">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Cerrar Sesión
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="outline" onClick={() => navigate('/auth')}>
+                Iniciar Sesión
+              </Button>
+            )}
           </div>
         </div>
       </div>

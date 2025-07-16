@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface Profile {
   id: string;
@@ -55,7 +55,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [usage, setUsage] = useState<UserUsage | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -149,16 +148,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
-        toast({
-          title: "Error de inicio de sesión",
-          description: error.message,
-          variant: "destructive",
-        });
+        toast.error("Error de inicio de sesión: " + error.message);
       } else {
-        toast({
-          title: "¡Bienvenido!",
-          description: "Has iniciado sesión correctamente.",
-        });
+        toast.success("¡Bienvenido! Has iniciado sesión correctamente.");
       }
 
       return { error };
@@ -182,16 +174,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
-        toast({
-          title: "Error de registro",
-          description: error.message,
-          variant: "destructive",
-        });
+        toast.error("Error de registro: " + error.message);
       } else {
-        toast({
-          title: "¡Registro exitoso!",
-          description: "Revisa tu email para verificar tu cuenta.",
-        });
+        toast.success("¡Registro exitoso! Revisa tu email para verificar tu cuenta.");
       }
 
       return { error };
@@ -209,10 +194,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setProfile(null);
       setUsage(null);
       
-      toast({
-        title: "Sesión cerrada",
-        description: "Has cerrado sesión correctamente.",
-      });
+      toast.success("Sesión cerrada correctamente.");
     } catch (error) {
       console.error('Error signing out:', error);
     }
