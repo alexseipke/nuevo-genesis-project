@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
+import { Target } from 'lucide-react';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 // API key de Mapbox (mismo que en MapboxMissionMap)
@@ -90,9 +91,9 @@ export function WelcomeMap() {
               <div className="absolute inset-0 rounded-full border-2 border-white/40 animate-ping"></div>
               <div className="absolute inset-2 rounded-full border-2 border-white/30 animate-ping" style={{ animationDelay: '0.5s' }}></div>
               <div className="absolute inset-4 rounded-full border-2 border-white/20 animate-ping" style={{ animationDelay: '1s' }}></div>
-              {/* Icono central */}
-              <div className="relative z-10 text-white text-3xl animate-bounce" style={{ animationDelay: '0.2s' }}>
-                🛸
+              {/* Icono central - Target con círculos concéntricos */}
+              <div className="relative z-10 text-white animate-bounce" style={{ animationDelay: '0.2s' }}>
+                <Target size={32} className="animate-pulse" strokeWidth={2.5} />
               </div>
             </div>
           </div>
