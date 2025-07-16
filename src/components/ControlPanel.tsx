@@ -152,10 +152,10 @@ export function ControlPanel({ parameters, onParametersChange, validation, selec
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors duration-300">
+                          <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors duration-300 leading-tight">
                             {category.title}
                           </h3>
-                          <p className="text-sm text-muted-foreground group-hover:text-foreground/70 transition-colors duration-300">
+                          <p className="text-sm text-muted-foreground group-hover:text-foreground/70 transition-colors duration-300 mt-1">
                             {category.missions.length} misiones disponibles
                           </p>
                           {/* Progress indicator */}
@@ -221,8 +221,8 @@ export function ControlPanel({ parameters, onParametersChange, validation, selec
                                 </div>
                                 
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <span className={`text-sm font-semibold transition-colors duration-300 ${
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className={`text-sm font-semibold transition-colors duration-300 leading-tight ${
                                       mission.available 
                                         ? "text-foreground group-hover/mission:text-primary" 
                                         : "text-muted-foreground"
@@ -230,13 +230,13 @@ export function ControlPanel({ parameters, onParametersChange, validation, selec
                                       {mission.title}
                                     </span>
                                     {!mission.available && (
-                                      <Badge variant="secondary" className="text-xs bg-muted/70 text-muted-foreground px-2 py-0.5">
+                                      <Badge variant="secondary" className="text-xs bg-muted/70 text-muted-foreground px-2 py-0.5 shrink-0">
                                         Próximamente
                                       </Badge>
                                     )}
                                   </div>
                                   {mission.available && (
-                                    <p className="text-xs text-muted-foreground group-hover/mission:text-foreground/70 transition-colors duration-300 mt-1">
+                                    <p className="text-xs text-muted-foreground/80 group-hover/mission:text-foreground/80 transition-colors duration-300 mt-1 leading-relaxed">
                                       {mission.id === 'orbita-inteligente' && 'Inspección orbital automatizada'}
                                       {mission.id === 'corredor-inteligente' && 'Mapeo lineal inteligente'}
                                       {mission.id === 'fachadas-pro' && 'Análisis detallado de fachadas'}
@@ -263,9 +263,9 @@ export function ControlPanel({ parameters, onParametersChange, validation, selec
           
           {/* Footer motivacional */}
           <div className="text-center mt-8 p-4 rounded-xl bg-gradient-to-r from-primary/5 to-transparent border border-primary/20 animate-fade-in">
-            <p className="text-xs text-muted-foreground leading-relaxed">
+            <p className="text-xs text-muted-foreground/90 leading-relaxed">
               🚁 <span className="font-semibold text-foreground">¡Revoluciona tus inspecciones!</span><br/>
-              Tecnología de vanguardia al alcance de tus manos
+              <span className="text-muted-foreground/80">Tecnología de vanguardia al alcance de tus manos</span>
             </p>
           </div>
         </div>
