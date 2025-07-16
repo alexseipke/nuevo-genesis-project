@@ -7,6 +7,7 @@ export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
   const waypoints: Waypoint[] = [];
   const totalRotations = params.rotations;
   const totalAngle = totalRotations * 2 * Math.PI;
+  const startAngle = (params.startAngle || 0) * Math.PI / 180;
   
   // Calcular el número de waypoints basado en la distancia especificada
   // Estimación más precisa de la longitud de la espiral
@@ -54,7 +55,7 @@ export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
   
   for (let i = 0; i <= actualWaypoints; i++) {
     const progress = i / actualWaypoints;
-    const angle = angleIncrement * i;
+    const angle = startAngle + angleIncrement * i;
     
     // Interpolación lineal para radio y altitud
     const radius = params.initialRadius + (params.finalRadius - params.initialRadius) * progress;
@@ -73,7 +74,7 @@ export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
     if (params.gimbalMode === 'frontal' && i < actualWaypoints) {
       // Heading hacia el siguiente waypoint
       const nextProgress = (i + 1) / actualWaypoints;
-      const nextAngle = angleIncrement * (i + 1);
+      const nextAngle = startAngle + angleIncrement * (i + 1);
       const nextRadius = params.initialRadius + (params.finalRadius - params.initialRadius) * nextProgress;
       const nextDeltaLat = (nextRadius / 111000) * Math.cos(nextAngle);
       const nextDeltaLng = (nextRadius / (111000 * Math.cos(params.center.lat * Math.PI / 180))) * Math.sin(nextAngle);

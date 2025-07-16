@@ -39,26 +39,13 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
       // Añadir controles de navegación
       map.current?.addControl(new mapboxgl.NavigationControl(), 'top-right');
       
-      // Añadir control de terreno para vista 3D (si está disponible)
-      if ('TerrainControl' in mapboxgl) {
-        map.current?.addControl(new (mapboxgl as any).TerrainControl({
-          source: 'mapbox-dem',
-          exaggeration: 1.5
-        }), 'top-left');
-      }
-      
-      // Añadir fuente de datos de elevación
+      // Añadir fuente de datos de elevación para waypoints solamente
       map.current?.addSource('mapbox-dem', {
         type: 'raster-dem',
         url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
         tileSize: 512,
         maxzoom: 14
       });
-      
-      // Establecer terreno 3D
-      if (is3D) {
-        map.current?.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
-      }
       
       // Event listener para clicks en el mapa
       map.current?.on('click', (e) => {
@@ -349,10 +336,8 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
       
       if (newIs3D) {
         map.current.easeTo({ pitch: 60 });
-        map.current.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
       } else {
         map.current.easeTo({ pitch: 0 });
-        map.current.setTerrain(null);
       }
     }
   };
@@ -398,14 +383,8 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
         <div className="space-y-1 text-xs text-gray-700">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-blue-500 rounded-full border border-white"></div>
-            <span>Centro de órbita</span>
+            <span>Centro de Órbita</span>
           </div>
-          {parameters.customPOI && (
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-orange-500 rounded-full border border-white"></div>
-              <span>Point of Interest</span>
-            </div>
-          )}
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-emerald-500 rounded-full border border-white"></div>
             <span>Waypoint</span>
@@ -415,7 +394,7 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
               <div className="w-2 h-2 bg-purple-500 rounded-full border border-white"></div>
               <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l border-r border-b-2 border-transparent border-b-purple-500"></div>
             </div>
-            <span>Foto (📷 → POI)</span>
+            <span>Foto</span>
           </div>
         </div>
         <div className="mt-2 pt-2 border-t border-gray-200 text-xs">

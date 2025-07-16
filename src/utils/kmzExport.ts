@@ -26,6 +26,9 @@ function generateKML(waypoints: Waypoint[], parameters: MissionParameters): stri
   const centerCoords = parameters.center;
   const poiCoords = parameters.poiLocation;
   
+  // Calcular altitudes relativas al punto de despegue (primer waypoint)
+  const takeoffAltitude = waypoints.length > 0 ? waypoints[0].altitude : parameters.initialAltitude;
+  
   let kml = `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
   <Document>
@@ -79,8 +82,8 @@ function generateKML(waypoints: Waypoint[], parameters: MissionParameters): stri
       <description>Centro de la órbita de la misión</description>
       <styleUrl>#centerStyle</styleUrl>
       <Point>
-        <altitudeMode>absolute</altitudeMode>
-        <coordinates>${centerCoords.lng},${centerCoords.lat},${parameters.initialAltitude}</coordinates>
+        <altitudeMode>relativeToGround</altitudeMode>
+        <coordinates>${centerCoords.lng},${centerCoords.lat},${parameters.initialAltitude - takeoffAltitude}</coordinates>
       </Point>
     </Placemark>`;
   }
@@ -93,8 +96,8 @@ function generateKML(waypoints: Waypoint[], parameters: MissionParameters): stri
       <description>Objetivo de las fotografías</description>
       <styleUrl>#centerStyle</styleUrl>
       <Point>
-        <altitudeMode>absolute</altitudeMode>
-        <coordinates>${poiCoords.lng},${poiCoords.lat},${parameters.poiInitialAltitude}</coordinates>
+        <altitudeMode>relativeToGround</altitudeMode>
+        <coordinates>${poiCoords.lng},${poiCoords.lat},${parameters.poiInitialAltitude - takeoffAltitude}</coordinates>
       </Point>
     </Placemark>`;
   }
@@ -115,8 +118,8 @@ function generateKML(waypoints: Waypoint[], parameters: MissionParameters): stri
       </description>
       <styleUrl>#${style}</styleUrl>
       <Point>
-        <altitudeMode>absolute</altitudeMode>
-        <coordinates>${waypoint.longitude},${waypoint.latitude},${waypoint.altitude}</coordinates>
+        <altitudeMode>relativeToGround</altitudeMode>
+        <coordinates>${waypoint.longitude},${waypoint.latitude},${waypoint.altitude - takeoffAltitude}</coordinates>
       </Point>
     </Placemark>`;
   });
@@ -129,11 +132,11 @@ function generateKML(waypoints: Waypoint[], parameters: MissionParameters): stri
       <description>Trayectoria completa de la misión</description>
       <styleUrl>#orbitLineStyle</styleUrl>
       <LineString>
-        <altitudeMode>absolute</altitudeMode>
+        <altitudeMode>relativeToGround</altitudeMode>
         <coordinates>`;
     
     waypoints.forEach((waypoint) => {
-      kml += `${waypoint.longitude},${waypoint.latitude},${waypoint.altitude} `;
+      kml += `${waypoint.longitude},${waypoint.latitude},${waypoint.altitude - takeoffAltitude} `;
     });
     
     kml += `</coordinates>
@@ -150,12 +153,12 @@ function generateKML(waypoints: Waypoint[], parameters: MissionParameters): stri
       <description>Radio inicial de la órbita</description>
       <styleUrl>#orbitLineStyle</styleUrl>
       <Polygon>
-        <altitudeMode>absolute</altitudeMode>
+        <altitudeMode>relativeToGround</altitudeMode>
         <outerBoundaryIs>
           <LinearRing>
             <coordinates>`;
     
-    const initialCircle = generateCircleCoordinates(centerCoords, parameters.initialRadius, parameters.initialAltitude);
+    const initialCircle = generateCircleCoordinates(centerCoords, parameters.initialRadius, parameters.initialAltitude - takeoffAltitude);
     kml += initialCircle.map(coord => `${coord.lng},${coord.lat},${coord.alt}`).join(' ');
     
     kml += `</coordinates>
@@ -172,13 +175,13 @@ function generateKML(waypoints: Waypoint[], parameters: MissionParameters): stri
         <description>Radio final de la órbita</description>
         <styleUrl>#orbitLineStyle</styleUrl>
         <Polygon>
-          <altitudeMode>absolute</altitudeMode>
+          <altitudeMode>relativeToGround</altitudeMode>
           <outerBoundaryIs>
             <LinearRing>
               <coordinates>`;
-      
-      const finalCircle = generateCircleCoordinates(centerCoords, parameters.finalRadius, parameters.finalAltitude);
-      kml += finalCircle.map(coord => `${coord.lng},${coord.lat},${coord.alt}`).join(' ');
+        
+        const finalCircle = generateCircleCoordinates(centerCoords, parameters.finalRadius, parameters.finalAltitude - takeoffAltitude);
+        kml += finalCircle.map(coord => `${coord.lng},${coord.lat},${coord.alt}`).join(' ');
       
       kml += `</coordinates>
             </LinearRing>

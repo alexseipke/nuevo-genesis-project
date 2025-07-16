@@ -153,9 +153,22 @@ export function ControlPanel({ parameters, onParametersChange, validation, onGen
                 type="number"
                 value={parameters.rotations}
                 onChange={(e) => onParametersChange({ rotations: Number(e.target.value) })}
-                min="1"
+                min="0.1"
                 max="10"
-                step="0.5"
+                step="0.1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="start-angle" className="text-xs">Ángulo de inicio (°)</Label>
+              <Input
+                id="start-angle"
+                type="number"
+                value={parameters.startAngle || 0}
+                onChange={(e) => onParametersChange({ startAngle: Number(e.target.value) })}
+                min="0"
+                max="359"
+                step="1"
               />
             </div>
 

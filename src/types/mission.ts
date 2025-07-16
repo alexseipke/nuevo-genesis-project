@@ -10,6 +10,7 @@ export interface MissionParameters {
   initialAltitude: number;
   finalAltitude: number;
   rotations: number;
+  startAngle?: number;
   imageCount: number;
   waypointDistance: number;
   customPOI: boolean;
