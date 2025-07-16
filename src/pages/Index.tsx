@@ -5,7 +5,7 @@ import { MapboxMissionMap } from '@/components/MapboxMissionMap';
 import { MissionParameters, Coordinates, Waypoint, ValidationResult } from '@/types/mission';
 import { calculateOrbitWaypoints, validateMission } from '@/utils/missionCalculations';
 import { exportToKMZ } from '@/utils/kmzExport';
-import { exportToCSV, exportToLitchiCSV } from '@/utils/csvExport';
+import { exportToLitchiCSV } from '@/utils/csvExport';
 import { toast } from 'sonner';
 
 // Componente de mapa simple sin Leaflet
@@ -201,29 +201,6 @@ const Index = () => {
     }
   };
 
-  const exportMissionCSV = () => {
-    if (waypoints.length === 0) {
-      toast.error("No hay waypoints para exportar");
-      return;
-    }
-
-    try {
-      const csvBlob = exportToCSV(waypoints, parameters);
-      const url = URL.createObjectURL(csvBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'mission.csv';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      toast.success("Misión exportada a CSV exitosamente");
-    } catch (error) {
-      console.error('Error exporting to CSV:', error);
-      toast.error("Error al exportar la misión");
-    }
-  };
 
   const exportMissionLitchi = () => {
     if (waypoints.length === 0) {
@@ -267,7 +244,6 @@ const Index = () => {
     <div className="h-screen flex flex-col bg-gradient-sky">
         <Header 
           onExportKMZ={exportMissionKMZ}
-          onExportCSV={exportMissionCSV}
           onExportLitchi={exportMissionLitchi}
           canExport={validation.isValid && waypoints.length > 0}
         />

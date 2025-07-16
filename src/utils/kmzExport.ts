@@ -144,87 +144,9 @@ function generateKML(waypoints: Waypoint[], parameters: MissionParameters): stri
     </Placemark>`;
   }
 
-  // Círculos de radio inicial y final
-  if (centerCoords) {
-    // Radio inicial
-    kml += `
-    <Placemark>
-      <name>Radio Inicial (${parameters.initialRadius}m)</name>
-      <description>Radio inicial de la órbita</description>
-      <styleUrl>#orbitLineStyle</styleUrl>
-      <Polygon>
-        <altitudeMode>relativeToGround</altitudeMode>
-        <outerBoundaryIs>
-          <LinearRing>
-            <coordinates>`;
-    
-    const initialCircle = generateCircleCoordinates(centerCoords, parameters.initialRadius, parameters.initialAltitude - takeoffAltitude);
-    kml += initialCircle.map(coord => `${coord.lng},${coord.lat},${coord.alt}`).join(' ');
-    
-    kml += `</coordinates>
-          </LinearRing>
-        </outerBoundaryIs>
-      </Polygon>
-    </Placemark>`;
-
-    // Radio final si es diferente
-    if (parameters.finalRadius !== parameters.initialRadius) {
-      kml += `
-      <Placemark>
-        <name>Radio Final (${parameters.finalRadius}m)</name>
-        <description>Radio final de la órbita</description>
-        <styleUrl>#orbitLineStyle</styleUrl>
-        <Polygon>
-          <altitudeMode>relativeToGround</altitudeMode>
-          <outerBoundaryIs>
-            <LinearRing>
-              <coordinates>`;
-        
-        const finalCircle = generateCircleCoordinates(centerCoords, parameters.finalRadius, parameters.finalAltitude - takeoffAltitude);
-        kml += finalCircle.map(coord => `${coord.lng},${coord.lat},${coord.alt}`).join(' ');
-      
-      kml += `</coordinates>
-            </LinearRing>
-          </outerBoundaryIs>
-        </Polygon>
-      </Placemark>`;
-    }
-  }
-
   kml += `
   </Document>
 </kml>`;
 
   return kml;
-}
-
-function generateCircleCoordinates(
-  center: { lat: number; lng: number }, 
-  radiusInMeters: number, 
-  altitude: number
-): { lat: number; lng: number; alt: number }[] {
-  const points = 32;
-  const coordinates = [];
-  
-  const lat = center.lat * Math.PI / 180;
-  const lng = center.lng * Math.PI / 180;
-  
-  for (let i = 0; i <= points; i++) {
-    const bearing = (i / points) * 2 * Math.PI;
-    
-    // Convertir metros a grados aproximadamente
-    const deltaLat = (radiusInMeters / 111000) * Math.cos(bearing);
-    const deltaLng = (radiusInMeters / (111000 * Math.cos(lat))) * Math.sin(bearing);
-    
-    const pointLat = (lat + deltaLat) * 180 / Math.PI;
-    const pointLng = (lng + deltaLng) * 180 / Math.PI;
-    
-    coordinates.push({
-      lat: pointLat,
-      lng: pointLng,
-      alt: altitude
-    });
-  }
-  
-  return coordinates;
 }

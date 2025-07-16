@@ -4,12 +4,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 
 interface HeaderProps {
   onExportKMZ: () => void;
-  onExportCSV: () => void;
   onExportLitchi: () => void;
   canExport: boolean;
 }
 
-export function Header({ onExportKMZ, onExportCSV, onExportLitchi, canExport }: HeaderProps) {
+export function Header({ onExportKMZ, onExportLitchi, canExport }: HeaderProps) {
   return (
     <header className="bg-card border-b border-border shadow-card">
       <div className="flex items-center justify-between px-6 py-4">
@@ -37,9 +36,6 @@ export function Header({ onExportKMZ, onExportCSV, onExportLitchi, canExport }: 
             <DropdownMenuContent>
               <DropdownMenuItem onClick={onExportKMZ}>
                 Exportar KMZ (Google Earth)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onExportCSV}>
-                Exportar CSV
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onExportLitchi}>
                 Exportar CSV Litchi
