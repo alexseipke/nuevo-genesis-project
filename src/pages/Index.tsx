@@ -147,7 +147,24 @@ const Index = () => {
   });
 
   const handleParametersChange = (newParams: Partial<MissionParameters>) => {
-    setParameters(prev => ({ ...prev, ...newParams }));
+    const updatedParams = { ...parameters, ...newParams };
+    
+    // Auto-adjust waypoint distance if needed
+    if (updatedParams.center && updatedParams.selectedDrone) {
+      const tempWaypoints = calculateOrbitWaypoints(updatedParams);
+      const tempValidation = validateMission(updatedParams, tempWaypoints);
+      
+      // If there's a suggestion to increase waypoint distance, apply it automatically
+      const suggestion = tempValidation.suggestions.find(s => s.includes('Aumentar distancia entre waypoints'));
+      if (suggestion) {
+        const match = suggestion.match(/(\d+)m/);
+        if (match) {
+          updatedParams.waypointDistance = parseInt(match[1]);
+        }
+      }
+    }
+    
+    setParameters(updatedParams);
   };
 
   const handleCenterChange = (center: Coordinates) => {

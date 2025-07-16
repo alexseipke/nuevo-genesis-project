@@ -163,15 +163,19 @@ export function ControlPanel({ parameters, onParametersChange, validation }: Con
             </div>
 
             <div>
-              <Label className="text-xs">Distancia entre Waypoints: {parameters.waypointDistance}m</Label>
-              <Slider
-                value={[parameters.waypointDistance]}
-                onValueChange={([value]) => onParametersChange({ waypointDistance: value })}
+              <Label className="text-xs">Distancia entre waypoints (m)</Label>
+              <Input
+                type="number"
+                value={parameters.waypointDistance}
+                onChange={(e) => onParametersChange({ waypointDistance: Number(e.target.value) })}
                 min={1}
-                max={50}
-                step={1}
+                max={1000}
                 className="mt-1"
+                disabled
               />
+              <div className="text-xs text-muted-foreground mt-1">
+                Ajustado automáticamente según el modelo de drone
+              </div>
             </div>
 
             <div>

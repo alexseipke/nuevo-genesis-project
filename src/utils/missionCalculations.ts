@@ -36,9 +36,9 @@ export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
   const drone = DRONE_MODELS.find(d => d.id === params.selectedDrone);
   const maxWaypoints = drone ? drone.maxWaypoints : 99;
   
-  // Calculate waypoint distance to not exceed drone limit
-  const calculatedWaypointDistance = totalDistance / maxWaypoints;
-  const actualWaypointDistance = Math.max(params.waypointDistance, calculatedWaypointDistance);
+  // Calculate optimal waypoint distance to not exceed drone limit
+  const optimalWaypointDistance = Math.ceil(totalDistance / maxWaypoints);
+  const actualWaypointDistance = Math.max(params.waypointDistance, optimalWaypointDistance);
   const actualWaypoints = Math.min(Math.max(2, Math.floor(totalDistance / actualWaypointDistance)), maxWaypoints);
   
   // Calcular incremento angular
