@@ -2,7 +2,7 @@ import { Target, Download, ChevronDown, User, LogOut, LayoutDashboard } from 'lu
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 interface PromoBannerProps {
   onExportKMZ?: () => void;
@@ -18,12 +18,12 @@ export function PromoBanner({ onExportKMZ, onExportLitchi, canExport = false }: 
       <div className="container mx-auto px-6 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-primary">
               <Target className="w-6 h-6 text-white" />
             </div>
             <h1 className="text-xl font-bold text-foreground">Planner-Viizor</h1>
-          </div>
+          </Link>
           
           {/* Texto promocional */}
           <div className="flex-1 px-6">
