@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MissionHeader } from '@/components/MissionHeader';
+import { PromoBanner } from '@/components/PromoBanner';
 import { ControlPanel } from '@/components/ControlPanel';
 import { MapboxMissionMap } from '@/components/MapboxMissionMap';
 import { MissionParameters, Coordinates, Waypoint, ValidationResult } from '@/types/mission';
@@ -319,11 +319,10 @@ const Index = () => {
 
   return (
     <div className="h-screen flex flex-col bg-gradient-sky">
-      <MissionHeader 
+      <PromoBanner 
         onExportKMZ={exportMissionKMZ}
         onExportLitchi={exportMissionLitchi}
         canExport={validation.isValid && waypoints.length > 0 && canExport}
-        missionType={selectedMissionType || undefined}
       />
       <div className="flex-1 flex overflow-hidden">
         <div className="space-y-4">
