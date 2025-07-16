@@ -254,7 +254,7 @@ export function ControlPanel({ parameters, onParametersChange, validation, onGen
             
             {parameters.gimbalMode === 'poi' && (
               <div className="text-xs text-muted-foreground space-y-1">
-                <div>Ángulo gimbal automático: {validation.automaticGimbalAngle.toFixed(1)}°</div>
+                <div>Ángulo gimbal automático: {(validation.automaticGimbalAngle || 0).toFixed(1)}°</div>
               </div>
             )}
           </CardContent>
@@ -276,21 +276,21 @@ export function ControlPanel({ parameters, onParametersChange, validation, onGen
               </div>
               <div>
                 <div className="text-muted-foreground">Distancia</div>
-                <div className="font-medium">{(validation.totalDistance / 1000).toFixed(1)}km</div>
+                <div className="font-medium">{((validation.totalDistance || 0) / 1000).toFixed(1)}km</div>
               </div>
               <div>
                 <div className="text-muted-foreground flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   Duración
                 </div>
-                <div className="font-medium">{validation.estimatedDuration.toFixed(1)} min</div>
+                <div className="font-medium">{(validation.estimatedDuration || 0).toFixed(1)} min</div>
               </div>
               <div>
                 <div className="text-muted-foreground flex items-center gap-1">
                   <Battery className="w-3 h-3" />
                   Baterías
                 </div>
-                <div className="font-medium">{validation.batteriesRequired.toFixed(1)}</div>
+                <div className="font-medium">{(validation.batteriesRequired || 0).toFixed(1)}</div>
               </div>
             </div>
 
