@@ -8,64 +8,102 @@ export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
   const totalRotations = params.rotations;
   const totalAngle = totalRotations * 2 * Math.PI;
   
-  // Calculate total arc length of the spiral
+  // Calcular el número de waypoints basado en la distancia especificada
+  // Estimación más precisa de la longitud de la espiral
+  const radiusDiff = params.finalRadius - params.initialRadius;
   const avgRadius = (params.initialRadius + params.finalRadius) / 2;
-  const approximateDistance = totalAngle * avgRadius;
   
-  // Calculate number of waypoints based on distance
-  const estimatedWaypoints = Math.floor(approximateDistance / params.waypointDistance);
-  const actualWaypoints = Math.min(estimatedWaypoints, 99); // DJI limit
+  // Longitud de la espiral usando fórmula más precisa
+  let totalDistance = 0;
+  const steps = 100;
+  for (let i = 0; i < steps; i++) {
+    const progress = i / steps;
+    const radius = params.initialRadius + radiusDiff * progress;
+    const angle = totalAngle * progress;
+    const nextProgress = (i + 1) / steps;
+    const nextRadius = params.initialRadius + radiusDiff * nextProgress;
+    const nextAngle = totalAngle * nextProgress;
+    
+    // Calcular distancia diferencial
+    const dr = nextRadius - radius;
+    const dTheta = nextAngle - angle;
+    const ds = Math.sqrt(dr * dr + (radius * dTheta) * (radius * dTheta));
+    totalDistance += ds;
+  }
   
-  // Calculate angular increment
+  // Número de waypoints basado en la distancia deseada
+  const estimatedWaypoints = Math.max(2, Math.floor(totalDistance / params.waypointDistance));
+  const actualWaypoints = Math.min(estimatedWaypoints, 99); // Límite DJI
+  
+  // Calcular incremento angular
   const angleIncrement = totalAngle / actualWaypoints;
   
-  // POI coordinates (default to center if not custom)
+  // Coordenadas POI (por defecto centro si no es personalizado)
   const poiLat = params.customPOI && params.poiLocation ? params.poiLocation.lat : params.center.lat;
   const poiLng = params.customPOI && params.poiLocation ? params.poiLocation.lng : params.center.lng;
+  
+  
+  // Determinar waypoints que tomarán fotos
+  const photoWaypoints = new Set<number>();
+  if (params.imageCount > 0) {
+    const photoInterval = Math.max(1, Math.floor(actualWaypoints / params.imageCount));
+    for (let i = 0; i < params.imageCount && i * photoInterval < actualWaypoints; i++) {
+      photoWaypoints.add(i * photoInterval);
+    }
+  }
   
   for (let i = 0; i <= actualWaypoints; i++) {
     const progress = i / actualWaypoints;
     const angle = angleIncrement * i;
     
-    // Linear interpolation for radius and altitude
+    // Interpolación lineal para radio y altitud
     const radius = params.initialRadius + (params.finalRadius - params.initialRadius) * progress;
     const altitude = params.initialAltitude + (params.finalAltitude - params.initialAltitude) * progress;
     
-    // Calculate position using polar coordinates
-    const lat = params.center.lat + (radius / 111000) * Math.cos(angle); // Rough conversion: 1 degree ≈ 111km
-    const lng = params.center.lng + (radius / (111000 * Math.cos(params.center.lat * Math.PI / 180))) * Math.sin(angle);
+    // Convertir coordenadas polares a geográficas
+    // Corrección por curvatura de la Tierra y proyección
+    const deltaLat = (radius / 111000) * Math.cos(angle);
+    const deltaLng = (radius / (111000 * Math.cos(params.center.lat * Math.PI / 180))) * Math.sin(angle);
     
-    // Calculate heading (direction to next waypoint or POI)
+    const lat = params.center.lat + deltaLat;
+    const lng = params.center.lng + deltaLng;
+    
+    // Calcular heading (dirección al siguiente waypoint o POI)
     let heading = 0;
     if (params.gimbalMode === 'frontal' && i < actualWaypoints) {
-      // Calculate heading to next waypoint
+      // Heading hacia el siguiente waypoint
+      const nextProgress = (i + 1) / actualWaypoints;
       const nextAngle = angleIncrement * (i + 1);
-      const nextRadius = params.initialRadius + (params.finalRadius - params.initialRadius) * ((i + 1) / actualWaypoints);
-      const nextLat = params.center.lat + (nextRadius / 111000) * Math.cos(nextAngle);
-      const nextLng = params.center.lng + (nextRadius / (111000 * Math.cos(params.center.lat * Math.PI / 180))) * Math.sin(nextAngle);
+      const nextRadius = params.initialRadius + (params.finalRadius - params.initialRadius) * nextProgress;
+      const nextDeltaLat = (nextRadius / 111000) * Math.cos(nextAngle);
+      const nextDeltaLng = (nextRadius / (111000 * Math.cos(params.center.lat * Math.PI / 180))) * Math.sin(nextAngle);
+      const nextLat = params.center.lat + nextDeltaLat;
+      const nextLng = params.center.lng + nextDeltaLng;
       
       heading = Math.atan2(nextLng - lng, nextLat - lat) * 180 / Math.PI;
       if (heading < 0) heading += 360;
     } else if (params.gimbalMode === 'poi') {
-      // Calculate heading towards POI
+      // Heading hacia POI
       heading = Math.atan2(poiLng - lng, poiLat - lat) * 180 / Math.PI;
       if (heading < 0) heading += 360;
     }
     
-    // Calculate gimbal pitch for POI mode
+    // Calcular gimbal pitch para modo POI
     let gimbalPitch = 0;
     if (params.gimbalMode === 'poi') {
       const poiAltitude = params.customPOI 
         ? params.poiInitialAltitude + (params.poiFinalAltitude - params.poiInitialAltitude) * progress
-        : altitude; // If POI is at center, use same altitude
+        : altitude;
       
       const horizontalDistance = radius;
       const verticalDistance = altitude - poiAltitude;
       gimbalPitch = -Math.atan2(verticalDistance, horizontalDistance) * 180 / Math.PI;
+      // Limitar pitch del gimbal a rangos realistas
+      gimbalPitch = Math.max(-90, Math.min(30, gimbalPitch));
     }
     
-    // Determine if this waypoint should take a photo
-    const takePhoto = params.imageCount > 0 && i % Math.max(1, Math.floor(actualWaypoints / params.imageCount)) === 0;
+    // Determinar si este waypoint debe tomar foto
+    const takePhoto = photoWaypoints.has(i);
     
     const waypoint: Waypoint = {
       id: i + 1,
