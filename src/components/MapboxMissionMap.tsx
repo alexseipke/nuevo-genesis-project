@@ -92,11 +92,14 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
         `))
         .addTo(map.current);
 
-      // Centrar el mapa en el centro de la órbita
-      map.current.flyTo({
-        center: [parameters.center.lng, parameters.center.lat],
-        zoom: 16
-      });
+      // Solo centrar el mapa suavemente la primera vez, manteniendo el zoom actual
+      const currentCenter = map.current.getCenter();
+      const distance = Math.abs(currentCenter.lng - parameters.center.lng) + Math.abs(currentCenter.lat - parameters.center.lat);
+      
+      // Solo hacer pan si la distancia es significativa (evitar movimientos innecesarios)
+      if (distance > 0.01) {
+        map.current.panTo([parameters.center.lng, parameters.center.lat]);
+      }
     }
 
     // Marcador del POI
