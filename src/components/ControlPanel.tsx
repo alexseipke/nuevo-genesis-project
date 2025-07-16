@@ -107,85 +107,167 @@ export function ControlPanel({ parameters, onParametersChange, validation, selec
   // Si no hay misión seleccionada, mostrar selector
   if (!selectedMissionType) {
     return (
-      <div className="w-80 h-full bg-background border-r border-border overflow-y-auto">
-        <div className="p-4 space-y-4">
-          <div className="text-center mb-6">
-            <h2 className="text-lg font-bold text-foreground mb-1">
+      <div className="w-80 h-full bg-gradient-to-b from-background via-background/95 to-primary/5 border-r border-border overflow-y-auto">
+        <div className="p-6 space-y-6">
+          {/* Header con animación */}
+          <div className="text-center mb-8 animate-fade-in">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-primary mb-4 shadow-lg">
+              <Target className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-foreground mb-2 bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
               Selecciona tu Misión
             </h2>
-            <p className="text-sm text-muted-foreground">
-              Elige el tipo de inspección que necesitas realizar
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Elige el tipo de inspección que necesitas realizar y descubre el poder de la automatización
             </p>
           </div>
 
-          {missionCategories.map((category) => (
-            <Card key={category.id} className="mission-card overflow-hidden">
-              <Collapsible 
-                open={openCategories.includes(category.id)}
-                onOpenChange={() => toggleCategory(category.id)}
-              >
-                <CollapsibleTrigger asChild>
-                  <div className="flex items-center p-4 hover:bg-muted/50 transition-colors cursor-pointer">
-                    <div className="flex items-center flex-1 gap-3">
-                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <img 
-                          src={category.icon} 
-                          alt={category.title}
-                          className="w-8 h-8 opacity-70"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-sm font-semibold text-foreground">
-                          {category.title}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                          {category.missions.length} misiones
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-muted-foreground">
-                      {openCategories.includes(category.id) ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </div>
-                  </div>
-                </CollapsibleTrigger>
-                
-                <CollapsibleContent>
-                  <CardContent className="pt-0 pb-4">
-                    <div className="space-y-2">
-                      {category.missions.map((mission) => (
-                        <Button
-                          key={mission.id}
-                          variant={mission.available ? "default" : "ghost"}
-                          className={`w-full justify-start h-auto p-3 text-left ${
-                            mission.available 
-                              ? "bg-primary/5 hover:bg-primary/10 border border-primary/20" 
-                              : "opacity-50 cursor-not-allowed"
-                          }`}
-                          onClick={() => handleMissionSelect(mission)}
-                          disabled={!mission.available}
-                        >
-                          <div>
-                            <div className="text-sm font-medium">
-                              {mission.title}
-                              {!mission.available && (
-                                <span className="ml-2 text-xs bg-muted text-muted-foreground px-2 py-1 rounded">
-                                  Próximamente
-                                </span>
-                              )}
-                            </div>
+          {missionCategories.map((category, index) => (
+            <div 
+              key={category.id} 
+              className="animate-fade-in hover-scale"
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              <Card className="group overflow-hidden border-2 border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-elegant bg-gradient-to-br from-card to-card/50 backdrop-blur-sm">
+                <Collapsible 
+                  open={openCategories.includes(category.id)}
+                  onOpenChange={() => toggleCategory(category.id)}
+                >
+                  <CollapsibleTrigger asChild>
+                    <div className="relative flex items-center p-5 hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent transition-all duration-300 cursor-pointer">
+                      {/* Glow effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      
+                      <div className="relative flex items-center flex-1 gap-4">
+                        <div className="relative">
+                          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent flex items-center justify-center border border-primary/20 group-hover:scale-110 transition-transform duration-300">
+                            <img 
+                              src={category.icon} 
+                              alt={category.title}
+                              className="w-8 h-8 filter group-hover:brightness-110 transition-all duration-300"
+                            />
                           </div>
-                        </Button>
-                      ))}
+                          {/* Pulse animation for active categories */}
+                          <div className="absolute inset-0 rounded-xl bg-primary/20 animate-ping opacity-0 group-hover:opacity-75" />
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors duration-300">
+                            {category.title}
+                          </h3>
+                          <p className="text-sm text-muted-foreground group-hover:text-foreground/70 transition-colors duration-300">
+                            {category.missions.length} misiones disponibles
+                          </p>
+                          {/* Progress indicator */}
+                          <div className="flex items-center gap-1 mt-2">
+                            {category.missions.map((mission, idx) => (
+                              <div 
+                                key={idx}
+                                className={`w-2 h-1 rounded-full transition-colors duration-300 ${
+                                  mission.available 
+                                    ? 'bg-primary group-hover:bg-primary/80' 
+                                    : 'bg-muted-foreground/30'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="relative text-muted-foreground group-hover:text-primary transition-colors duration-300">
+                        {openCategories.includes(category.id) ? (
+                          <ChevronDown className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
+                        ) : (
+                          <ChevronRight className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
+                        )}
+                      </div>
                     </div>
-                  </CardContent>
-                </CollapsibleContent>
-              </Collapsible>
-            </Card>
+                  </CollapsibleTrigger>
+                  
+                  <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                    <CardContent className="pt-0 pb-5 px-5">
+                      <div className="space-y-3 relative">
+                        {/* Connecting line */}
+                        <div className="absolute left-7 top-0 bottom-0 w-px bg-gradient-to-b from-primary/30 to-transparent" />
+                        
+                        {category.missions.map((mission, missionIndex) => (
+                          <div 
+                            key={mission.id}
+                            className="relative animate-scale-in"
+                            style={{ animationDelay: `${missionIndex * 0.1}s` }}
+                          >
+                            <Button
+                              variant="ghost"
+                              className={`group/mission w-full justify-start h-auto p-4 text-left rounded-xl border-2 transition-all duration-300 ${
+                                mission.available 
+                                  ? "bg-gradient-to-r from-card to-card/50 hover:from-primary/10 hover:to-primary/5 border-primary/20 hover:border-primary/40 hover:shadow-lg" 
+                                  : "bg-muted/30 border-muted/40 opacity-60 cursor-not-allowed"
+                              }`}
+                              onClick={() => handleMissionSelect(mission)}
+                              disabled={!mission.available}
+                            >
+                              <div className="flex items-center w-full">
+                                {/* Mission icon */}
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 transition-all duration-300 ${
+                                  mission.available 
+                                    ? "bg-primary/10 group-hover/mission:bg-primary/20 group-hover/mission:scale-110" 
+                                    : "bg-muted/50"
+                                }`}>
+                                  {mission.available ? (
+                                    <CheckCircle className="w-5 h-5 text-primary" />
+                                  ) : (
+                                    <Clock className="w-5 h-5 text-muted-foreground" />
+                                  )}
+                                </div>
+                                
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-sm font-semibold transition-colors duration-300 ${
+                                      mission.available 
+                                        ? "text-foreground group-hover/mission:text-primary" 
+                                        : "text-muted-foreground"
+                                    }`}>
+                                      {mission.title}
+                                    </span>
+                                    {!mission.available && (
+                                      <Badge variant="secondary" className="text-xs bg-muted/70 text-muted-foreground px-2 py-0.5">
+                                        Próximamente
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  {mission.available && (
+                                    <p className="text-xs text-muted-foreground group-hover/mission:text-foreground/70 transition-colors duration-300 mt-1">
+                                      {mission.id === 'orbita-inteligente' && 'Inspección orbital automatizada'}
+                                      {mission.id === 'corredor-inteligente' && 'Mapeo lineal inteligente'}
+                                      {mission.id === 'fachadas-pro' && 'Análisis detallado de fachadas'}
+                                    </p>
+                                  )}
+                                </div>
+                                
+                                {mission.available && (
+                                  <div className="opacity-0 group-hover/mission:opacity-100 transition-opacity duration-300">
+                                    <ChevronRight className="w-4 h-4 text-primary" />
+                                  </div>
+                                )}
+                              </div>
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+            </div>
           ))}
+          
+          {/* Footer motivacional */}
+          <div className="text-center mt-8 p-4 rounded-xl bg-gradient-to-r from-primary/5 to-transparent border border-primary/20 animate-fade-in">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              🚁 <span className="font-semibold text-foreground">¡Revoluciona tus inspecciones!</span><br/>
+              Tecnología de vanguardia al alcance de tus manos
+            </p>
+          </div>
         </div>
       </div>
     );
