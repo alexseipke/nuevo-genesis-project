@@ -6,9 +6,10 @@ interface HeaderProps {
   onExportKMZ: () => void;
   onExportLitchi: () => void;
   canExport: boolean;
+  missionType?: string;
 }
 
-export function Header({ onExportKMZ, onExportLitchi, canExport }: HeaderProps) {
+export function Header({ onExportKMZ, onExportLitchi, canExport, missionType }: HeaderProps) {
   return (
     <header className="bg-card border-b border-border shadow-card">
       <div className="flex items-center justify-between px-6 py-4">
@@ -17,7 +18,10 @@ export function Header({ onExportKMZ, onExportLitchi, canExport }: HeaderProps) 
             <Bot className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">Viizor - UAV Mission Planner</h1>
+            <h1 className="text-xl font-bold text-foreground">viizor</h1>
+            <p className="text-sm text-muted-foreground">
+              {missionType ? missionType : "Mission Planning Pro"}
+            </p>
           </div>
         </div>
         
