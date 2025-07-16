@@ -355,8 +355,8 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
       )}
       
       {selectedMissionType === 'corredor-inteligente' && (
-        <div className="absolute top-20 left-4 right-4 bg-white/95 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-gray-200">
-          <p className="text-sm font-medium text-gray-800">
+        <div className="absolute top-4 left-80 bg-white/95 backdrop-blur-sm rounded-lg p-3 shadow-lg border border-gray-200 max-w-xs">
+          <p className="text-xs font-medium text-gray-800">
             📍 Haz clic para definir el eje del corredor inteligente
           </p>
           <p className="text-xs text-gray-600 mt-1">
