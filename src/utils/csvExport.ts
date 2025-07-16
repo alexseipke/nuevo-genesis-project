@@ -2,10 +2,12 @@ import { Waypoint, MissionParameters } from '@/types/mission';
 
 
 export function exportToLitchiCSV(waypoints: Waypoint[], parameters: MissionParameters): Blob {
-  // Formato específico para Litchi - exactamente 10 columnas
+  // Formato específico para Litchi - todas las columnas requeridas
   const headers = [
     'latitude', 'longitude', 'altitude(m)', 'heading', 'curvesize', 
-    'rotationdir', 'gimbalpitchmode', 'gimbalpitchangle', 'actiontype', 'actionparam'
+    'rotationdir', 'gimbalpitchmode', 'gimbalpitchangle', 'actiontype', 'actionparam',
+    'altitudemode', 'speed(m/s)', 'poi_latitude', 'poi_longitude', 'poi_altitude(m)',
+    'poi_altitudemode', 'photo_timeinterval', 'photo_distinterval'
   ];
   
   const rows = [headers.join(',')];
@@ -16,12 +18,20 @@ export function exportToLitchiCSV(waypoints: Waypoint[], parameters: MissionPara
       waypoint.longitude.toFixed(7),
       waypoint.altitude.toFixed(1),
       waypoint.heading.toFixed(1),
-      '0', // curvesize
-      '0', // rotationdir
-      '0', // gimbalpitchmode
-      '-90', // gimbalpitchangle (hacia abajo para fotos cenitales)
-      waypoint.takePhoto ? '1' : '-1', // actiontype (1 = take photo, -1 = none)
-      waypoint.takePhoto ? '0' : '0', // actionparam
+      waypoint.curveSize.toString(),
+      waypoint.rotationDir.toString(),
+      waypoint.gimbalMode.toString(),
+      waypoint.gimbalPitchAngle.toString(),
+      waypoint.actionType1.toString(),
+      waypoint.actionParam1.toString(),
+      waypoint.altitudeMode.toString(),
+      waypoint.speed.toFixed(1),
+      waypoint.poiLatitude.toFixed(7),
+      waypoint.poiLongitude.toFixed(7),
+      waypoint.poiAltitude.toFixed(1),
+      waypoint.poiAltitudeMode.toString(),
+      waypoint.photoTimeInterval.toString(),
+      waypoint.photoDistInterval.toString()
     ];
     rows.push(row.join(','));
   });
