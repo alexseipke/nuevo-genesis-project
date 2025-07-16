@@ -13,9 +13,11 @@ interface MapboxMissionMapProps {
   waypoints: Waypoint[];
   onCenterChange: (center: Coordinates) => void;
   onOrbitStartChange: (location: Coordinates) => void;
+  onCorridorPointAdd?: (point: Coordinates) => void;
+  selectedMissionType?: string;
 }
 
-export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbitStartChange }: MapboxMissionMapProps) {
+export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbitStartChange, onCorridorPointAdd, selectedMissionType }: MapboxMissionMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -67,9 +69,15 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
         map.current?.on('click', (e) => {
           const { lng, lat } = e.lngLat;
           
-          if (!parameters.center) {
-            // Primer click establece el centro
-            onCenterChange({ lat, lng });
+          if (selectedMissionType === 'orbita-inteligente') {
+            if (!parameters.center) {
+              // Primer click establece el centro
+              onCenterChange({ lat, lng });
+            }
+          } else if (selectedMissionType === 'corredor-inteligente' && onCorridorPointAdd) {
+            // Para corredor inteligente, cada click agrega un punto al corredor
+            const newPoint = { lat, lng };
+            onCorridorPointAdd(newPoint);
           }
         });
       });

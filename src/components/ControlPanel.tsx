@@ -83,9 +83,10 @@ interface ControlPanelProps {
   validation: ValidationResult;
   selectedMissionType: string | null;
   onMissionTypeSelect: (missionType: string) => void;
+  waypoints: any[]; // Agregar waypoints para mostrar el estado
 }
 
-export function ControlPanel({ parameters, onParametersChange, validation, selectedMissionType, onMissionTypeSelect }: ControlPanelProps) {
+export function ControlPanel({ parameters, onParametersChange, validation, selectedMissionType, onMissionTypeSelect, waypoints }: ControlPanelProps) {
   const selectedDrone = DRONE_MODELS.find(d => d.id === parameters.selectedDrone);
   const [openCategories, setOpenCategories] = useState<string[]>([]);
 
@@ -205,12 +206,275 @@ export function ControlPanel({ parameters, onParametersChange, validation, selec
               Cambiar
             </Button>
           </div>
-          
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">
-              Panel de Corredor Inteligente en desarrollo... 🚧
-            </p>
-          </div>
+
+          {/* Selección de Drone */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Plane className="w-4 h-4" />
+                Selección de Drone
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <Label htmlFor="drone-select" className="text-xs">Modelo de Drone</Label>
+                <Select
+                  value={parameters.selectedDrone}
+                  onValueChange={(value) => onParametersChange({ selectedDrone: value })}
+                >
+                  <SelectTrigger id="drone-select">
+                    <SelectValue placeholder="Seleccionar drone..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DRONE_MODELS.map(drone => (
+                      <SelectItem key={drone.id} value={drone.id}>
+                        {drone.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {selectedDrone && (
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <div>Batería: {selectedDrone.batteryLife} min</div>
+                  <div>Peso: {selectedDrone.weight}g</div>
+                  <div>Vel. máx: {selectedDrone.maxSpeed} m/s</div>
+                  <div>Max waypoints: {selectedDrone.maxWaypoints}</div>
+                  <div>Max distancia: {selectedDrone.maxDistance/1000}km</div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Definición de Puntos del Corredor */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <MapPin className="w-4 h-4" />
+                Puntos del Corredor
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="text-xs text-muted-foreground">
+                Define al menos 2 puntos para crear el corredor de vuelo. 
+                Haz clic en el mapa para añadir puntos.
+              </div>
+              
+              {parameters.corridorPoints.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-xs font-medium">Puntos definidos: {parameters.corridorPoints.length}</div>
+                  <div className="max-h-20 overflow-y-auto space-y-1">
+                    {parameters.corridorPoints.map((point, index) => (
+                      <div key={index} className="text-xs bg-muted p-2 rounded flex justify-between items-center">
+                        <span>P{index + 1}: {point.lat.toFixed(6)}, {point.lng.toFixed(6)}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto p-1"
+                          onClick={() => {
+                            const newPoints = parameters.corridorPoints.filter((_, i) => i !== index);
+                            onParametersChange({ corridorPoints: newPoints });
+                          }}
+                        >
+                          ✕
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => onParametersChange({ corridorPoints: [] })}
+                  >
+                    Limpiar puntos
+                  </Button>
+                </div>
+              )}
+
+              {parameters.corridorPoints.length === 0 && (
+                <div className="text-center py-4 border-2 border-dashed border-muted rounded-lg">
+                  <MapPin className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-xs text-muted-foreground">
+                    Haz clic en el mapa para añadir puntos del corredor
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Parámetros del Corredor - Habilitados después de definir puntos */}
+          {parameters.corridorPoints.length >= 2 && (
+            <>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Ruler className="w-4 h-4" />
+                    Ancho del Corredor
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <Label className="text-xs">Ancho (m): {parameters.corridorWidth}</Label>
+                    <Slider
+                      value={[parameters.corridorWidth || 50]}
+                      onValueChange={([value]) => onParametersChange({ corridorWidth: value })}
+                      min={10}
+                      max={500}
+                      step={5}
+                      className="mt-1"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Layers className="w-4 h-4" />
+                    Solapamiento
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label className="text-xs">Solapamiento Frontal: {parameters.frontOverlap}%</Label>
+                    <Slider
+                      value={[parameters.frontOverlap || 80]}
+                      onValueChange={([value]) => onParametersChange({ frontOverlap: value })}
+                      min={60}
+                      max={90}
+                      step={5}
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-xs">Solapamiento Lateral: {parameters.sideOverlap}%</Label>
+                    <Slider
+                      value={[parameters.sideOverlap || 60]}
+                      onValueChange={([value]) => onParametersChange({ sideOverlap: value })}
+                      min={50}
+                      max={80}
+                      step={5}
+                      className="mt-1"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Target className="w-4 h-4" />
+                    Altura de Vuelo
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <Label className="text-xs">Altura (m)</Label>
+                    <Input
+                      type="number"
+                      value={parameters.corridorAltitude}
+                      onChange={(e) => onParametersChange({ corridorAltitude: Number(e.target.value) })}
+                      min={10}
+                      max={120}
+                      className="mt-1"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {/* Velocidad de Vuelo - Siempre disponible */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Settings className="w-4 h-4" />
+                Velocidad de Vuelo
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <Label className="text-xs">Velocidad: {parameters.flightSpeed} m/s</Label>
+                <Slider
+                  value={[parameters.flightSpeed]}
+                  onValueChange={([value]) => onParametersChange({ flightSpeed: value })}
+                  min={1}
+                  max={selectedDrone ? selectedDrone.maxSpeed : 25}
+                  step={1}
+                  className="mt-1"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Estado de la Misión */}
+          {waypoints.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Info className="w-4 h-4" />
+                  Estado de la Misión
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <div className="text-muted-foreground">Waypoints</div>
+                    <div className="font-medium">{validation.waypointCount}/{selectedDrone?.maxWaypoints || 99}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Distancia</div>
+                    <div className="font-medium">{((validation.totalDistance || 0) / 1000).toFixed(1)}km</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      Duración
+                    </div>
+                    <div className="font-medium">{(validation.estimatedDuration || 0).toFixed(1)} min</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground flex items-center gap-1">
+                      <Battery className="w-3 h-3" />
+                      Baterías
+                    </div>
+                    <div className="font-medium">{(validation.batteriesRequired || 0).toFixed(1)}</div>
+                  </div>
+                </div>
+
+                {/* Validation Messages */}
+                {validation.errors.length > 0 && (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription className="text-xs">
+                      {validation.errors[0]}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {validation.warnings.length > 0 && validation.errors.length === 0 && (
+                  <Alert>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription className="text-xs">
+                      {validation.warnings[0]}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {validation.isValid && (
+                  <Alert>
+                    <CheckCircle className="h-4 w-4" />
+                    <AlertDescription className="text-xs">
+                      Misión válida y lista para exportar
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     );

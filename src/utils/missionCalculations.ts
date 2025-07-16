@@ -1,6 +1,128 @@
 import { Coordinates, MissionParameters, Waypoint, ValidationResult, DroneModel } from '@/types/mission';
 import { DRONE_MODELS } from '@/data/drones';
 
+// Función para calcular waypoints del corredor inteligente
+export function calculateCorridorWaypoints(params: MissionParameters): Waypoint[] {
+  if (params.corridorPoints.length < 2) return [];
+  
+  const waypoints: Waypoint[] = [];
+  const { corridorPoints, corridorWidth = 50, frontOverlap = 80, sideOverlap = 60, corridorAltitude = 50, flightSpeed } = params;
+  
+  // Encontrar el drone seleccionado para obtener datos de cámara
+  const drone = DRONE_MODELS.find(d => d.id === params.selectedDrone);
+  if (!drone) return [];
+  
+  // Calcular la distancia entre fotos basada en el solapamiento frontal
+  // Asumiendo un campo de visión típico para drones DJI
+  const groundSampleDistance = 0.05; // 5cm/pixel aproximado a 50m altura
+  const imageWidth = 4000; // pixels típicos
+  const imageHeight = 3000; // pixels típicos
+  
+  const groundCoverageWidth = imageWidth * groundSampleDistance;
+  const groundCoverageLength = imageHeight * groundSampleDistance;
+  
+  const photoDistance = groundCoverageLength * (1 - frontOverlap / 100);
+  const passDistance = groundCoverageWidth * (1 - sideOverlap / 100);
+  
+  // Calcular número de pasadas necesarias
+  const passesNeeded = Math.ceil(corridorWidth / passDistance);
+  
+  // Generar waypoints para cada pasada
+  for (let passIndex = 0; passIndex < passesNeeded; passIndex++) {
+    const offsetDistance = (passIndex - (passesNeeded - 1) / 2) * passDistance;
+    
+    // Generar waypoints a lo largo del corredor para esta pasada
+    for (let i = 0; i < corridorPoints.length - 1; i++) {
+      const startPoint = corridorPoints[i];
+      const endPoint = corridorPoints[i + 1];
+      
+      // Calcular el bearing del segmento
+      const bearing = calculateBearing(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
+      const perpendicularBearing = (bearing + 90) % 360;
+      
+      // Calcular distancia del segmento
+      const segmentDistance = calculateDistance(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
+      
+      // Número de fotos en este segmento
+      const photosInSegment = Math.ceil(segmentDistance / photoDistance);
+      
+      for (let photoIndex = 0; photoIndex <= photosInSegment; photoIndex++) {
+        const progress = photoIndex / photosInSegment;
+        
+        // Interpolar posición a lo largo del segmento
+        const lat = startPoint.lat + (endPoint.lat - startPoint.lat) * progress;
+        const lng = startPoint.lng + (endPoint.lng - startPoint.lng) * progress;
+        
+        // Aplicar offset perpendicular para la pasada
+        const offsetCoords = moveCoordinate(lat, lng, perpendicularBearing, offsetDistance);
+        
+        const waypoint: Waypoint = {
+          id: waypoints.length + 1,
+          latitude: offsetCoords.lat,
+          longitude: offsetCoords.lng,
+          altitude: corridorAltitude,
+          heading: bearing,
+          curveSize: 0,
+          rotationDir: 0,
+          gimbalMode: 0,
+          gimbalPitchAngle: -90, // Cámara hacia abajo
+          actionType1: 1, // Tomar foto
+          actionParam1: 1,
+          altitudeMode: 0,
+          speed: flightSpeed,
+          poiLatitude: offsetCoords.lat,
+          poiLongitude: offsetCoords.lng,
+          poiAltitude: 0,
+          poiAltitudeMode: 0,
+          photoTimeInterval: 0,
+          photoDistInterval: photoDistance,
+          takePhoto: true
+        };
+        
+        waypoints.push(waypoint);
+      }
+    }
+  }
+  
+  return waypoints;
+}
+
+// Función para calcular el bearing entre dos puntos
+function calculateBearing(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const lat1Rad = lat1 * Math.PI / 180;
+  const lat2Rad = lat2 * Math.PI / 180;
+  
+  const y = Math.sin(dLng) * Math.cos(lat2Rad);
+  const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLng);
+  
+  let bearing = Math.atan2(y, x) * 180 / Math.PI;
+  return (bearing + 360) % 360;
+}
+
+// Función para mover una coordenada en una dirección y distancia específica
+function moveCoordinate(lat: number, lng: number, bearing: number, distance: number): Coordinates {
+  const R = 6371000; // Radio de la Tierra en metros
+  const bearingRad = bearing * Math.PI / 180;
+  const latRad = lat * Math.PI / 180;
+  const lngRad = lng * Math.PI / 180;
+  
+  const newLatRad = Math.asin(
+    Math.sin(latRad) * Math.cos(distance / R) +
+    Math.cos(latRad) * Math.sin(distance / R) * Math.cos(bearingRad)
+  );
+  
+  const newLngRad = lngRad + Math.atan2(
+    Math.sin(bearingRad) * Math.sin(distance / R) * Math.cos(latRad),
+    Math.cos(distance / R) - Math.sin(latRad) * Math.sin(newLatRad)
+  );
+  
+  return {
+    lat: newLatRad * 180 / Math.PI,
+    lng: newLngRad * 180 / Math.PI
+  };
+}
+
 export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
   if (!params.center) return [];
 

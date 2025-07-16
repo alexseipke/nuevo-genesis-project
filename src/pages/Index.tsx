@@ -3,7 +3,7 @@ import { Header } from '@/components/Header';
 import { ControlPanel } from '@/components/ControlPanel';
 import { MapboxMissionMap } from '@/components/MapboxMissionMap';
 import { MissionParameters, Coordinates, Waypoint, ValidationResult } from '@/types/mission';
-import { calculateOrbitWaypoints, validateMission } from '@/utils/missionCalculations';
+import { calculateOrbitWaypoints, calculateCorridorWaypoints, validateMission } from '@/utils/missionCalculations';
 import { exportToKMZ } from '@/utils/kmzExport';
 import { exportToLitchiCSV } from '@/utils/csvExport';
 import { toast } from 'sonner';
@@ -126,7 +126,13 @@ const Index = () => {
     flightSpeed: 5,
     orbitStartLocation: null,
     targetAltitude: undefined,
-    selectedDrone: 'mavic-3-enterprise'
+    selectedDrone: 'mavic-3-enterprise',
+    // Parámetros para Corredor Inteligente
+    corridorPoints: [],
+    corridorWidth: 50,
+    frontOverlap: 80,
+    sideOverlap: 60,
+    corridorAltitude: 50,
   });
 
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
@@ -154,6 +160,14 @@ const Index = () => {
   const handleOrbitStartChange = (location: Coordinates) => {
     setParameters(prev => ({ ...prev, orbitStartLocation: location }));
     toast.success('Punto de inicio orbital establecido');
+  };
+
+  const handleCorridorPointAdd = (point: Coordinates) => {
+    setParameters(prev => ({ 
+      ...prev, 
+      corridorPoints: [...prev.corridorPoints, point] 
+    }));
+    toast.success(`Punto ${parameters.corridorPoints.length + 1} añadido al corredor`);
   };
 
   const generateMission = () => {
@@ -223,10 +237,13 @@ const Index = () => {
     }
   };
 
-  // Auto-generate mission when parameters change (if center is set and mission type selected)
+  // Auto-generate mission when parameters change
   useEffect(() => {
-    if (parameters.center && selectedMissionType === 'orbita-inteligente') {
+    if (selectedMissionType === 'orbita-inteligente' && parameters.center) {
       const newWaypoints = calculateOrbitWaypoints(parameters);
+      setWaypoints(newWaypoints);
+    } else if (selectedMissionType === 'corredor-inteligente' && parameters.corridorPoints.length >= 2) {
+      const newWaypoints = calculateCorridorWaypoints(parameters);
       setWaypoints(newWaypoints);
     }
   }, [parameters, selectedMissionType]);
@@ -253,6 +270,7 @@ const Index = () => {
           validation={validation}
           selectedMissionType={selectedMissionType}
           onMissionTypeSelect={setSelectedMissionType}
+          waypoints={waypoints}
         />
         
         <div className="flex-1 p-4">
@@ -263,6 +281,8 @@ const Index = () => {
                 waypoints={waypoints}
                 onCenterChange={handleCenterChange}
                 onOrbitStartChange={handleOrbitStartChange}
+                onCorridorPointAdd={handleCorridorPointAdd}
+                selectedMissionType={selectedMissionType}
               />
             ) : (
               <div className="h-full flex items-center justify-center bg-muted/30 rounded-lg">

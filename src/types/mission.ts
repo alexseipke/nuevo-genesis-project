@@ -16,6 +16,12 @@ export interface MissionParameters {
   orbitStartLocation: Coordinates | null;
   targetAltitude?: number;
   selectedDrone: string;
+  // Parámetros para Corredor Inteligente
+  corridorPoints: Coordinates[];
+  corridorWidth?: number;
+  frontOverlap?: number;
+  sideOverlap?: number;
+  corridorAltitude?: number;
 }
 
 export interface Waypoint {
