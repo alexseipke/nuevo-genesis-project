@@ -14,10 +14,12 @@ interface MapboxMissionMapProps {
   onCenterChange: (center: Coordinates) => void;
   onOrbitStartChange: (location: Coordinates) => void;
   onCorridorPointAdd?: (point: Coordinates) => void;
+  onCorridorPointUpdate?: (index: number, point: Coordinates) => void;
+  onCorridorPointInsert?: (index: number, point: Coordinates) => void;
   selectedMissionType?: string;
 }
 
-export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbitStartChange, onCorridorPointAdd, selectedMissionType }: MapboxMissionMapProps) {
+export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbitStartChange, onCorridorPointAdd, onCorridorPointUpdate, onCorridorPointInsert, selectedMissionType }: MapboxMissionMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -75,9 +77,18 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
               onCenterChange({ lat, lng });
             }
           } else if (selectedMissionType === 'corredor-inteligente' && onCorridorPointAdd) {
-            // Para corredor inteligente, cada click agrega un punto al corredor
+            // Para corredor inteligente, cada click agrega un vértice al eje
             const newPoint = { lat, lng };
             onCorridorPointAdd(newPoint);
+          }
+        });
+
+        // Event listener para clic derecho (salir del modo de edición)
+        map.current?.on('contextmenu', (e) => {
+          e.preventDefault();
+          if (selectedMissionType === 'corredor-inteligente') {
+            // Aquí podrías emitir un evento para indicar que se terminó la edición del eje
+            console.log('Finalizando edición del eje del corredor');
           }
         });
       });
@@ -160,35 +171,120 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
         .addTo(map.current);
     }
 
-    // Marcadores de waypoints
-    waypoints.forEach((waypoint, index) => {
-      const waypointEl = document.createElement('div');
-      waypointEl.className = 'mapbox-marker';
-      
-      waypointEl.innerHTML = `
-        <div style="
-          width: 12px; 
-          height: 12px; 
-          background-color: #8b5cf6; 
-          border: 2px solid white; 
-          border-radius: 50%; 
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        "></div>
-      `;
+    // Marcadores de puntos del corredor (vértices del eje)
+    if (selectedMissionType === 'corredor-inteligente' && parameters.corridorPoints) {
+      parameters.corridorPoints.forEach((point, index) => {
+        const vertexEl = document.createElement('div');
+        vertexEl.className = 'mapbox-marker corridor-vertex';
+        
+        vertexEl.innerHTML = `
+          <div style="
+            width: 14px; 
+            height: 14px; 
+            background-color: #10b981; 
+            border: 2px solid white; 
+            border-radius: 50%; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            cursor: grab;
+          "></div>
+        `;
 
-      new mapboxgl.Marker(waypointEl)
-        .setLngLat([waypoint.longitude, waypoint.latitude])
-        .setPopup(new mapboxgl.Popup({ offset: 15 }).setHTML(`
-          <div style="font-size: 12px;">
-            <strong>Waypoint ${index + 1}</strong><br/>
-            Lat: ${waypoint.latitude.toFixed(6)}<br/>
-            Lng: ${waypoint.longitude.toFixed(6)}<br/>
-            Alt: ${waypoint.altitude.toFixed(1)}m<br/>
-            Heading: ${waypoint.heading.toFixed(1)}°
-          </div>
-        `))
-        .addTo(map.current);
-    });
+        const marker = new mapboxgl.Marker(vertexEl, { draggable: true })
+          .setLngLat([point.lng, point.lat])
+          .setPopup(new mapboxgl.Popup({ offset: 15 }).setHTML(`
+            <div style="font-size: 12px;">
+              <strong>Vértice ${index + 1}</strong><br/>
+              Lat: ${point.lat.toFixed(6)}<br/>
+              Lng: ${point.lng.toFixed(6)}
+            </div>
+          `))
+          .addTo(map.current);
+
+        // Handle drag events
+        marker.on('dragend', () => {
+          const lngLat = marker.getLngLat();
+          if (onCorridorPointUpdate) {
+            onCorridorPointUpdate(index, { lat: lngLat.lat, lng: lngLat.lng });
+          }
+        });
+
+        // Add midpoint markers for inserting new vertices
+        if (index < parameters.corridorPoints.length - 1) {
+          const nextPoint = parameters.corridorPoints[index + 1];
+          const midLat = (point.lat + nextPoint.lat) / 2;
+          const midLng = (point.lng + nextPoint.lng) / 2;
+
+          const midPointEl = document.createElement('div');
+          midPointEl.className = 'mapbox-marker corridor-midpoint';
+          midPointEl.innerHTML = `
+            <div style="
+              width: 8px; 
+              height: 8px; 
+              background-color: #6b7280; 
+              border: 1px solid white; 
+              border-radius: 50%; 
+              box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+              cursor: pointer;
+              opacity: 0.7;
+            ">
+              <div style="
+                position: absolute;
+                top: -2px;
+                left: -2px;
+                width: 12px;
+                height: 12px;
+                background-color: transparent;
+                border: 1px dashed #6b7280;
+                border-radius: 50%;
+              "></div>
+            </div>
+          `;
+
+          const midMarker = new mapboxgl.Marker(midPointEl)
+            .setLngLat([midLng, midLat])
+            .addTo(map.current);
+
+          midPointEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (onCorridorPointInsert) {
+              onCorridorPointInsert(index + 1, { lat: midLat, lng: midLng });
+            }
+          });
+        }
+      });
+    }
+
+    // Marcadores de waypoints (para órbita inteligente)
+    if (selectedMissionType === 'orbita-inteligente') {
+      waypoints.forEach((waypoint, index) => {
+        const waypointEl = document.createElement('div');
+        waypointEl.className = 'mapbox-marker';
+        
+        waypointEl.innerHTML = `
+          <div style="
+            width: 12px; 
+            height: 12px; 
+            background-color: #8b5cf6; 
+            border: 2px solid white; 
+            border-radius: 50%; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+          "></div>
+        `;
+
+        new mapboxgl.Marker(waypointEl)
+          .setLngLat([waypoint.longitude, waypoint.latitude])
+          .setPopup(new mapboxgl.Popup({ offset: 15 }).setHTML(`
+            <div style="font-size: 12px;">
+              <strong>Waypoint ${index + 1}</strong><br/>
+              Lat: ${waypoint.latitude.toFixed(6)}<br/>
+              Lng: ${waypoint.longitude.toFixed(6)}<br/>
+              Alt: ${waypoint.altitude.toFixed(1)}m<br/>
+              Heading: ${waypoint.heading.toFixed(1)}°
+            </div>
+          `))
+          .addTo(map.current);
+      });
+    }
 
     // Dibujar línea de la órbita
     if (waypoints.length > 1) {
@@ -243,10 +339,21 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onOrbi
       
       
       {/* Instrucciones overlay */}
-      {!parameters.center && (
+      {selectedMissionType === 'orbita-inteligente' && !parameters.center && (
         <div className="absolute top-20 left-4 right-4 bg-white/95 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-gray-200">
           <p className="text-sm font-medium text-gray-800">
             📍 Haz clic en el mapa para establecer el centro de la órbita
+          </p>
+        </div>
+      )}
+      
+      {selectedMissionType === 'corredor-inteligente' && (
+        <div className="absolute top-20 left-4 right-4 bg-white/95 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-gray-200">
+          <p className="text-sm font-medium text-gray-800">
+            📍 Haz clic para definir el eje del corredor inteligente
+          </p>
+          <p className="text-xs text-gray-600 mt-1">
+            Clic derecho para finalizar • Arrastra los vértices para editarlos
           </p>
         </div>
       )}

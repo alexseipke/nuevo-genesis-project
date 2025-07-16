@@ -167,7 +167,30 @@ const Index = () => {
       ...prev, 
       corridorPoints: [...prev.corridorPoints, point] 
     }));
-    toast.success(`Punto ${parameters.corridorPoints.length + 1} añadido al corredor`);
+    toast.success(`Vértice ${parameters.corridorPoints.length + 1} añadido al eje`);
+  };
+
+  const handleCorridorPointUpdate = (index: number, point: Coordinates) => {
+    setParameters(prev => {
+      const newCorridorPoints = [...prev.corridorPoints];
+      newCorridorPoints[index] = point;
+      return {
+        ...prev,
+        corridorPoints: newCorridorPoints
+      };
+    });
+  };
+
+  const handleCorridorPointInsert = (index: number, point: Coordinates) => {
+    setParameters(prev => {
+      const newCorridorPoints = [...prev.corridorPoints];
+      newCorridorPoints.splice(index, 0, point);
+      return {
+        ...prev,
+        corridorPoints: newCorridorPoints
+      };
+    });
+    toast.success('Nuevo vértice insertado');
   };
 
   const generateMission = () => {
@@ -282,6 +305,8 @@ const Index = () => {
                 onCenterChange={handleCenterChange}
                 onOrbitStartChange={handleOrbitStartChange}
                 onCorridorPointAdd={handleCorridorPointAdd}
+                onCorridorPointUpdate={handleCorridorPointUpdate}
+                onCorridorPointInsert={handleCorridorPointInsert}
                 selectedMissionType={selectedMissionType}
               />
             ) : (
