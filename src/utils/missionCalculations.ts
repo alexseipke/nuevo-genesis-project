@@ -38,6 +38,7 @@ export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
   
   // Calculate optimal waypoint distance to not exceed drone limit
   const optimalWaypointDistance = Math.ceil(totalDistance / maxWaypoints);
+  // Solo aplicar restricción mínima, permitir valores superiores al recomendado
   const actualWaypointDistance = Math.max(params.waypointDistance, optimalWaypointDistance);
   const actualWaypoints = Math.min(Math.max(2, Math.floor(totalDistance / actualWaypointDistance)), maxWaypoints);
   
@@ -49,12 +50,20 @@ export function calculateOrbitWaypoints(params: MissionParameters): Waypoint[] {
   const poiLng = params.center.lng;
   
   
-  // Determinar waypoints que tomarán fotos
+  // Determinar waypoints que tomarán fotos - distribución más uniforme
   const photoWaypoints = new Set<number>();
-  if (params.imageCount > 0) {
-    const photoInterval = Math.max(1, Math.floor(actualWaypoints / params.imageCount));
-    for (let i = 0; i < params.imageCount && i * photoInterval < actualWaypoints; i++) {
-      photoWaypoints.add(i * photoInterval);
+  if (params.imageCount > 0 && actualWaypoints > 0) {
+    if (params.imageCount >= actualWaypoints) {
+      // Si se piden más fotos que waypoints, tomar foto en cada waypoint
+      for (let i = 0; i < actualWaypoints; i++) {
+        photoWaypoints.add(i);
+      }
+    } else {
+      // Distribuir fotos uniformemente a lo largo del recorrido
+      for (let i = 0; i < params.imageCount; i++) {
+        const waypointIndex = Math.round((i * (actualWaypoints - 1)) / (params.imageCount - 1));
+        photoWaypoints.add(waypointIndex);
+      }
     }
   }
   

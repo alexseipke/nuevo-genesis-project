@@ -171,10 +171,9 @@ export function ControlPanel({ parameters, onParametersChange, validation }: Con
                 min={1}
                 max={1000}
                 className="mt-1"
-                disabled
               />
               <div className="text-xs text-muted-foreground mt-1">
-                Ajustado automáticamente según el modelo de drone
+                Mínimo recomendado: {validation.suggestions.find(s => s.includes('Aumentar distancia'))?.match(/(\d+)m/)?.[1] || parameters.waypointDistance}m
               </div>
             </div>
 
