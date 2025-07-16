@@ -78,8 +78,8 @@ export function WelcomeMap() {
   }, []);
 
   return (
-    <div className="absolute inset-0 w-full h-full">
-      <div ref={mapContainer} className="w-full h-full" />
+    <div className="relative w-full h-full">
+      <div ref={mapContainer} className="absolute inset-0 w-full h-full" />
       
       {/* Overlay con texto de bienvenida */}
       <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
