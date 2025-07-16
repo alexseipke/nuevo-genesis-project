@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { PromoBanner } from '@/components/PromoBanner';
 import { ControlPanel } from '@/components/ControlPanel';
 import { MapboxMissionMap } from '@/components/MapboxMissionMap';
+import { WelcomeMap } from '@/components/WelcomeMap';
 import { MissionParameters, Coordinates, Waypoint, ValidationResult } from '@/types/mission';
 import { calculateOrbitWaypoints, calculateCorridorWaypoints, validateMission } from '@/utils/missionCalculations';
 import { exportToKMZ } from '@/utils/kmzExport';
@@ -355,45 +356,7 @@ const Index = () => {
                 selectedMissionType={selectedMissionType}
               />
             ) : (
-              <div className="h-full relative rounded-lg overflow-hidden">
-                {/* Mapa de fondo */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-green-100">
-                  <div className="absolute inset-0 opacity-20">
-                    {/* Simular calles */}
-                    <div className="absolute top-1/4 left-0 right-0 h-0.5 bg-gray-400"></div>
-                    <div className="absolute top-2/4 left-0 right-0 h-0.5 bg-gray-400"></div>
-                    <div className="absolute top-3/4 left-0 right-0 h-0.5 bg-gray-400"></div>
-                    <div className="absolute top-0 bottom-0 left-1/4 w-0.5 bg-gray-400"></div>
-                    <div className="absolute top-0 bottom-0 left-2/4 w-0.5 bg-gray-400"></div>
-                    <div className="absolute top-0 bottom-0 left-3/4 w-0.5 bg-gray-400"></div>
-                  </div>
-                  
-                  {/* Elementos decorativos del mapa */}
-                  <div className="absolute top-1/3 left-1/3 w-2 h-2 bg-green-600 rounded-full opacity-60"></div>
-                  <div className="absolute top-2/3 right-1/3 w-3 h-3 bg-blue-600 rounded-full opacity-60"></div>
-                  <div className="absolute bottom-1/4 left-1/4 w-1 h-1 bg-yellow-600 rounded-full opacity-60"></div>
-                  
-                  {/* Overlay con texto de bienvenida */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                    <div className="text-center bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-xl max-w-md">
-                      <div className="mb-4">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-primary mb-4">
-                          <span className="text-white text-2xl">🛸</span>
-                        </div>
-                      </div>
-                      <h1 className="text-2xl font-bold text-foreground mb-3">
-                        Bienvenido a Planner-Viizor
-                      </h1>
-                      <p className="text-lg text-muted-foreground mb-6">
-                        ¡Vuele en el campo y planifique en su escritorio!
-                      </p>
-                      <div className="text-sm text-muted-foreground">
-                        Selecciona un tipo de misión en el panel izquierdo para comenzar
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <WelcomeMap />
             )}
           </div>
         </div>
