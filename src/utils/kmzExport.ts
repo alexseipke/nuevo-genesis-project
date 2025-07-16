@@ -26,8 +26,8 @@ function generateKML(waypoints: Waypoint[], parameters: MissionParameters): stri
   const centerCoords = parameters.center;
   const poiCoords = parameters.poiLocation;
   
-  // Calcular altitudes relativas al punto de despegue (primer waypoint)
-  const takeoffAltitude = waypoints.length > 0 ? waypoints[0].altitude : parameters.initialAltitude;
+  // Calcular altitudes relativas al suelo (usar altitud del terreno como base)
+  const takeoffAltitude = 0; // Base del terreno
   
   let kml = `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">

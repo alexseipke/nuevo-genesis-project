@@ -54,8 +54,8 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
         if (!parameters.center) {
           // Primer click establece el centro
           onCenterChange({ lat, lng });
-        } else if (parameters.customPOI && (!parameters.poiLocation || confirm('¿Cambiar ubicación del POI?'))) {
-          // Clicks posteriores establecen POI si está habilitado
+        } else if (parameters.customPOI && e.originalEvent.shiftKey) {
+          // Shift+Click establece POI si está habilitado
           onPOIChange({ lat, lng });
         }
       });
@@ -119,7 +119,7 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
         <div style="
           width: 14px; 
           height: 14px; 
-          background-color: #f97316; 
+          background-color: #dc2626; 
           border: 2px solid white; 
           border-radius: 50%; 
           box-shadow: 0 2px 4px rgba(0,0,0,0.3);
@@ -138,8 +138,8 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
         .addTo(map.current);
     }
 
-    // Marcadores de waypoints
-    waypoints.slice(0, 50).forEach((waypoint, index) => {
+    // Marcadores de waypoints - mostrar todos
+    waypoints.forEach((waypoint, index) => {
       const waypointEl = document.createElement('div');
       waypointEl.className = 'mapbox-marker';
       
@@ -372,7 +372,7 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
       {parameters.center && parameters.customPOI && !parameters.poiLocation && (
         <div className="absolute top-4 left-4 right-4 bg-white/95 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-gray-200">
           <p className="text-sm font-medium text-gray-800">
-            🎯 Haz clic en el mapa para establecer el Point of Interest (POI)
+            🎯 Mantén presionado Shift + Clic en el mapa para establecer el Point of Interest (POI)
           </p>
         </div>
       )}
@@ -399,9 +399,6 @@ export function MapboxMissionMap({ parameters, waypoints, onCenterChange, onPOIC
         </div>
         <div className="mt-2 pt-2 border-t border-gray-200 text-xs">
           <div>Waypoints: {waypoints.length}</div>
-          {waypoints.length > 50 && (
-            <div className="text-orange-600">Mostrando primeros 50</div>
-          )}
         </div>
       </div>
     </div>

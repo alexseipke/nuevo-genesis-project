@@ -3,8 +3,9 @@ import { Header } from '@/components/Header';
 import { ControlPanel } from '@/components/ControlPanel';
 import { MapboxMissionMap } from '@/components/MapboxMissionMap';
 import { MissionParameters, Coordinates, Waypoint, ValidationResult } from '@/types/mission';
-import { calculateOrbitWaypoints, validateMission, exportToLitchiCSV } from '@/utils/missionCalculations';
+import { calculateOrbitWaypoints, validateMission } from '@/utils/missionCalculations';
 import { exportToKMZ } from '@/utils/kmzExport';
+import { exportToCSV, exportToLitchiCSV } from '@/utils/csvExport';
 import { toast } from 'sonner';
 
 // Componente de mapa simple sin Leaflet
@@ -174,7 +175,7 @@ const Index = () => {
     }
   };
 
-  const exportMission = async () => {
+  const exportMissionKMZ = async () => {
     if (waypoints.length === 0) {
       toast.error('Genera primero una misión');
       return;
@@ -200,6 +201,54 @@ const Index = () => {
     }
   };
 
+  const exportMissionCSV = () => {
+    if (waypoints.length === 0) {
+      toast.error("No hay waypoints para exportar");
+      return;
+    }
+
+    try {
+      const csvBlob = exportToCSV(waypoints, parameters);
+      const url = URL.createObjectURL(csvBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'mission.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success("Misión exportada a CSV exitosamente");
+    } catch (error) {
+      console.error('Error exporting to CSV:', error);
+      toast.error("Error al exportar la misión");
+    }
+  };
+
+  const exportMissionLitchi = () => {
+    if (waypoints.length === 0) {
+      toast.error("No hay waypoints para exportar");
+      return;
+    }
+
+    try {
+      const csvBlob = exportToLitchiCSV(waypoints, parameters);
+      const url = URL.createObjectURL(csvBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'litchi_mission.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success("Misión exportada para Litchi exitosamente");
+    } catch (error) {
+      console.error('Error exporting to Litchi CSV:', error);
+      toast.error("Error al exportar la misión");
+    }
+  };
+
   // Auto-generate mission when parameters change (if center is set)
   useEffect(() => {
     if (parameters.center) {
@@ -216,10 +265,12 @@ const Index = () => {
 
   return (
     <div className="h-screen flex flex-col bg-gradient-sky">
-      <Header 
-        onExport={exportMission}
-        canExport={validation.isValid && waypoints.length > 0}
-      />
+        <Header 
+          onExportKMZ={exportMissionKMZ}
+          onExportCSV={exportMissionCSV}
+          onExportLitchi={exportMissionLitchi}
+          canExport={validation.isValid && waypoints.length > 0}
+        />
       
       <div className="flex-1 flex overflow-hidden">
         <ControlPanel

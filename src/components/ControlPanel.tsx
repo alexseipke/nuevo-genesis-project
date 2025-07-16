@@ -173,14 +173,15 @@ export function ControlPanel({ parameters, onParametersChange, validation, onGen
             </div>
 
             <div>
-              <Label className="text-xs">Distancia entre Waypoints: {parameters.waypointDistance}m</Label>
-              <Slider
-                value={[parameters.waypointDistance]}
-                onValueChange={([value]) => onParametersChange({ waypointDistance: value })}
-                min={1}
-                max={50}
-                step={1}
-                className="mt-2"
+              <Label htmlFor="waypoint-distance" className="text-xs">Distancia entre Waypoints (m)</Label>
+              <Input
+                id="waypoint-distance"
+                type="number"
+                value={parameters.waypointDistance}
+                onChange={(e) => onParametersChange({ waypointDistance: Number(e.target.value) })}
+                min="1"
+                max="50"
+                step="1"
               />
             </div>
 
@@ -245,7 +246,7 @@ export function ControlPanel({ parameters, onParametersChange, validation, onGen
                 
                 {!parameters.poiLocation && (
                   <p className="text-xs text-muted-foreground">
-                    Haz clic en el mapa para establecer la ubicación del POI
+                    Shift + Clic en el mapa para establecer la ubicación del POI
                   </p>
                 )}
               </div>

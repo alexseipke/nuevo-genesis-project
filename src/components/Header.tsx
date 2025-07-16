@@ -1,12 +1,15 @@
-import { Plane, Settings, Download, Bot } from 'lucide-react';
+import { Plane, Settings, Download, Bot, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface HeaderProps {
-  onExport: () => void;
+  onExportKMZ: () => void;
+  onExportCSV: () => void;
+  onExportLitchi: () => void;
   canExport: boolean;
 }
 
-export function Header({ onExport, canExport }: HeaderProps) {
+export function Header({ onExportKMZ, onExportCSV, onExportLitchi, canExport }: HeaderProps) {
   return (
     <header className="bg-card border-b border-border shadow-card">
       <div className="flex items-center justify-between px-6 py-4">
@@ -20,14 +23,29 @@ export function Header({ onExport, canExport }: HeaderProps) {
         </div>
         
         <div className="flex items-center gap-3">
-          <Button
-            onClick={onExport}
-            disabled={!canExport}
-            className="bg-gradient-primary hover:opacity-90 transition-opacity"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Exportar KMZ
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                disabled={!canExport}
+                className="bg-gradient-primary hover:opacity-90 transition-opacity"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Exportar
+                <ChevronDown className="w-4 h-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={onExportKMZ}>
+                Exportar KMZ (Google Earth)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onExportCSV}>
+                Exportar CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onExportLitchi}>
+                Exportar CSV Litchi
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           
           <Button variant="outline" size="icon">
             <Settings className="w-4 h-4" />
