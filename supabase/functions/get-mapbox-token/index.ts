@@ -13,11 +13,20 @@ Deno.serve(async (req) => {
 
   try {
     // Get the Mapbox API key from Supabase secrets
-    const mapboxToken = Deno.env.get('MAPBOX_PUBLIC_TOKEN');
+    let mapboxToken = Deno.env.get('MAPBOX_PUBLIC_TOKEN');
+    
+    // If not found, try alternative names
+    if (!mapboxToken) {
+      mapboxToken = Deno.env.get('MAPBOX_TOKEN');
+    }
+    if (!mapboxToken) {
+      mapboxToken = Deno.env.get('MAPBOX_API_KEY');
+    }
     
     console.log('Environment check:', {
       hasToken: !!mapboxToken,
-      allEnvKeys: Object.keys(Deno.env.toObject()).filter(key => key.includes('MAPBOX'))
+      tokenLength: mapboxToken ? mapboxToken.length : 0,
+      allEnvKeys: Object.keys(Deno.env.toObject()).filter(key => key.toLowerCase().includes('mapbox'))
     });
     
     if (!mapboxToken) {
