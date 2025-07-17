@@ -18,29 +18,14 @@ export function useMapboxToken() {
           return;
         }
 
-        // Try to get token from edge function
-        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-        
-        if (error) {
-          console.error('Error fetching Mapbox token:', error);
-          setShowTokenInput(true);
-          setError('Token de Mapbox no configurado en el servidor');
-          setLoading(false);
-          return;
-        }
-        
-        if (data?.token) {
-          setToken(data.token);
-          setLoading(false);
-        } else {
-          setShowTokenInput(true);
-          setError('Token de Mapbox no disponible');
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error('Error calling get-mapbox-token function:', err);
+        // Show token input for user to enter their Mapbox token
         setShowTokenInput(true);
-        setError('Error al obtener configuración del mapa');
+        setError('Por favor ingresa tu token público de Mapbox');
+        setLoading(false);
+      } catch (err) {
+        console.error('Error in token setup:', err);
+        setShowTokenInput(true);
+        setError('Por favor ingresa tu token público de Mapbox');
         setLoading(false);
       }
     }
