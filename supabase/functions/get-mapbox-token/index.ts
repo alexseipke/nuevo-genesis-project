@@ -3,56 +3,28 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-  'Access-Control-Max-Age': '86400',
 }
 
 Deno.serve(async (req) => {
-  console.log('🔧 Edge Function: Received request:', req.method, req.url);
-  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    console.log('🔧 Edge Function: Handling OPTIONS request');
-    return new Response(null, { 
-      status: 200,
-      headers: corsHeaders 
-    });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
     // Get the Mapbox API key from Supabase secrets
-    let mapboxToken = Deno.env.get('MAPBOX_PUBLIC_TOKEN');
+    const mapboxToken = Deno.env.get('MAPBOX_PUBLIC_TOKEN');
     
-    // If not found, try alternative names
-    if (!mapboxToken) {
-      mapboxToken = Deno.env.get('MAPBOX_TOKEN');
-    }
-    if (!mapboxToken) {
-      mapboxToken = Deno.env.get('MAPBOX_API_KEY');
-    }
-    
-    // Debug logging
-    const allEnvKeys = Object.keys(Deno.env.toObject());
-    console.log('Detailed environment check:', {
+    console.log('Environment check:', {
       hasToken: !!mapboxToken,
-      tokenLength: mapboxToken ? mapboxToken.length : 0,
-      tokenPrefix: mapboxToken ? mapboxToken.substring(0, 10) + '...' : 'none',
-      allEnvKeys: allEnvKeys,
-      mapboxKeys: allEnvKeys.filter(key => key.toLowerCase().includes('mapbox')),
-      totalEnvVars: allEnvKeys.length
+      allEnvKeys: Object.keys(Deno.env.toObject()).filter(key => key.includes('MAPBOX'))
     });
     
-    if (!mapboxToken || mapboxToken.trim() === '') {
-      console.error('MAPBOX_PUBLIC_TOKEN is empty or not found');
-      console.log('All environment variables:', allEnvKeys);
+    if (!mapboxToken) {
+      console.error('MAPBOX_PUBLIC_TOKEN not found in environment variables');
+      console.log('Available environment variables:', Object.keys(Deno.env.toObject()));
       return new Response(
-        JSON.stringify({ 
-          error: 'Mapbox token not configured. Please ensure MAPBOX_PUBLIC_TOKEN is set in Supabase Edge Function Secrets.',
-          debug: {
-            availableKeys: allEnvKeys.filter(key => key.toLowerCase().includes('mapbox')),
-            totalKeys: allEnvKeys.length
-          }
-        }),
+        JSON.stringify({ error: 'Mapbox token not configured. Please check if MAPBOX_PUBLIC_TOKEN is set in Supabase Edge Function Secrets.' }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -60,7 +32,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('Successfully retrieved Mapbox token with length:', mapboxToken.length);
+    console.log('Successfully retrieved Mapbox token');
     
     return new Response(
       JSON.stringify({ token: mapboxToken }),
