@@ -8,8 +8,11 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
+  console.log(`Request method: ${req.method}, URL: ${req.url}`);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling OPTIONS request');
     return new Response(null, { 
       status: 200,
       headers: corsHeaders 
@@ -22,12 +25,11 @@ Deno.serve(async (req) => {
     
     console.log('Environment check:', {
       hasToken: !!mapboxToken,
-      allEnvKeys: Object.keys(Deno.env.toObject()).filter(key => key.includes('MAPBOX'))
+      tokenStart: mapboxToken ? mapboxToken.substring(0, 10) + '...' : 'none'
     });
     
     if (!mapboxToken) {
       console.error('MAPBOX_PUBLIC_TOKEN not found in environment variables');
-      console.log('Available environment variables:', Object.keys(Deno.env.toObject()));
       return new Response(
         JSON.stringify({ error: 'Mapbox token not configured. Please check if MAPBOX_PUBLIC_TOKEN is set in Supabase Edge Function Secrets.' }),
         { 
