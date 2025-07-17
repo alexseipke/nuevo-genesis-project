@@ -12,8 +12,19 @@ export function WelcomeMap() {
   const { token, loading: tokenLoading, error: tokenError, showTokenInput, setManualToken } = useMapboxToken();
 
   useEffect(() => {
-    if (!mapContainer.current || !token) return;
+    console.log('🗺️ WelcomeMap: Effect triggered, token state:', { 
+      hasToken: !!token, 
+      tokenLoading, 
+      error: tokenError,
+      tokenPrefix: token ? token.substring(0, 10) + '...' : 'none'
+    });
+    
+    if (!mapContainer.current || !token) {
+      console.log('🗺️ WelcomeMap: Not ready to initialize map - container or token missing');
+      return;
+    }
 
+    console.log('🗺️ WelcomeMap: Setting mapbox access token');
     // Set the Mapbox access token
     mapboxgl.accessToken = token;
 
