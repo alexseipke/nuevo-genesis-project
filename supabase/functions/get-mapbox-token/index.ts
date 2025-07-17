@@ -23,17 +23,28 @@ Deno.serve(async (req) => {
       mapboxToken = Deno.env.get('MAPBOX_API_KEY');
     }
     
-    console.log('Environment check:', {
+    // Debug logging
+    const allEnvKeys = Object.keys(Deno.env.toObject());
+    console.log('Detailed environment check:', {
       hasToken: !!mapboxToken,
       tokenLength: mapboxToken ? mapboxToken.length : 0,
-      allEnvKeys: Object.keys(Deno.env.toObject()).filter(key => key.toLowerCase().includes('mapbox'))
+      tokenPrefix: mapboxToken ? mapboxToken.substring(0, 10) + '...' : 'none',
+      allEnvKeys: allEnvKeys,
+      mapboxKeys: allEnvKeys.filter(key => key.toLowerCase().includes('mapbox')),
+      totalEnvVars: allEnvKeys.length
     });
     
-    if (!mapboxToken) {
-      console.error('MAPBOX_PUBLIC_TOKEN not found in environment variables');
-      console.log('Available environment variables:', Object.keys(Deno.env.toObject()));
+    if (!mapboxToken || mapboxToken.trim() === '') {
+      console.error('MAPBOX_PUBLIC_TOKEN is empty or not found');
+      console.log('All environment variables:', allEnvKeys);
       return new Response(
-        JSON.stringify({ error: 'Mapbox token not configured. Please check if MAPBOX_PUBLIC_TOKEN is set in Supabase Edge Function Secrets.' }),
+        JSON.stringify({ 
+          error: 'Mapbox token not configured. Please ensure MAPBOX_PUBLIC_TOKEN is set in Supabase Edge Function Secrets.',
+          debug: {
+            availableKeys: allEnvKeys.filter(key => key.toLowerCase().includes('mapbox')),
+            totalKeys: allEnvKeys.length
+          }
+        }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -41,7 +52,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('Successfully retrieved Mapbox token');
+    console.log('Successfully retrieved Mapbox token with length:', mapboxToken.length);
     
     return new Response(
       JSON.stringify({ token: mapboxToken }),
