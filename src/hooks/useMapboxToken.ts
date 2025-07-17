@@ -7,14 +7,18 @@ export function useMapboxToken() {
   const [showTokenInput, setShowTokenInput] = useState(false);
 
   useEffect(() => {
-    // Token público de Mapbox válido
-    const mapboxToken = 'pk.eyJ1IjoidHJhY2tzeW0iLCJhIjoiY2tldGZrcnJzMzQzZzJ3bnRlZmNiNzA1cyJ9.3IwgZxZ5RqfZGNOH7RTGfQ';
+    // Verificar si hay un token guardado en localStorage
+    const savedToken = localStorage.getItem('mapbox_token');
     
-    console.log('Setting Mapbox token:', mapboxToken.substring(0, 20) + '...');
-    
-    
-    setToken(mapboxToken);
-    setLoading(false);
+    if (savedToken) {
+      console.log('Using saved token from localStorage');
+      setToken(savedToken);
+      setLoading(false);
+    } else {
+      console.log('No token found, showing input form');
+      setShowTokenInput(true);
+      setLoading(false);
+    }
   }, []);
 
   const setManualToken = (newToken: string) => {
