@@ -7,8 +7,11 @@ export function useMapboxToken() {
   const [showTokenInput, setShowTokenInput] = useState(false);
 
   useEffect(() => {
-    // Token público de Mapbox - es seguro ponerlo aquí
-    const mapboxToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+    // Token público de Mapbox válido
+    const mapboxToken = 'pk.eyJ1IjoidHJhY2tzeW0iLCJhIjoiY2tldGZrcnJzMzQzZzJ3bnRlZmNiNzA1cyJ9.3IwgZxZ5RqfZGNOH7RTGfQ';
+    
+    console.log('Setting Mapbox token:', mapboxToken.substring(0, 20) + '...');
+    
     
     setToken(mapboxToken);
     setLoading(false);

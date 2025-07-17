@@ -12,10 +12,16 @@ export function WelcomeMap() {
   const { token, loading: tokenLoading, error: tokenError, showTokenInput, setManualToken } = useMapboxToken();
 
   useEffect(() => {
-    if (!token) return;
+    console.log('WelcomeMap useEffect triggered:', { token: token?.substring(0, 20) + '...' });
+    
+    if (!token) {
+      console.log('No token available yet');
+      return;
+    }
 
     // Set the Mapbox access token
     mapboxgl.accessToken = token;
+    console.log('Mapbox access token set');
 
     // Obtener ubicación del usuario o usar Madrid por defecto
     navigator.geolocation.getCurrentPosition(
@@ -30,19 +36,28 @@ export function WelcomeMap() {
     );
 
     function initializeMap(center: [number, number]) {
+      console.log('initializeMap called with center:', center);
+      
       // Verificar que el contenedor existe antes de crear el mapa
       if (!mapContainer.current) {
         console.warn('Map container not ready');
         return;
       }
+      
+      console.log('Map container ready, dimensions:', {
+        width: mapContainer.current.clientWidth,
+        height: mapContainer.current.clientHeight
+      });
 
       // Limpiar mapa existente si existe
       if (map.current) {
+        console.log('Removing existing map');
         map.current.remove();
         map.current = null;
       }
 
       try {
+        console.log('Creating new Mapbox map...');
         // Inicializar el mapa
         map.current = new mapboxgl.Map({
           container: mapContainer.current,
@@ -52,9 +67,12 @@ export function WelcomeMap() {
           pitch: 45,
           bearing: 0
         });
+        
+        console.log('Mapbox map created successfully');
 
         // Configurar eventos del mapa
         map.current.on('load', () => {
+          console.log('Map loaded successfully');
           setMapLoaded(true);
           
           // Añadir controles de navegación
