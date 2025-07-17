@@ -12,7 +12,7 @@ export function WelcomeMap() {
   const { token, loading: tokenLoading, error: tokenError, showTokenInput, setManualToken } = useMapboxToken();
 
   useEffect(() => {
-    if (!mapContainer.current || !token) return;
+    if (!token) return;
 
     // Set the Mapbox access token
     mapboxgl.accessToken = token;
@@ -30,54 +30,84 @@ export function WelcomeMap() {
     );
 
     function initializeMap(center: [number, number]) {
-      // Inicializar el mapa
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current!,
-        style: 'mapbox://styles/mapbox/satellite-streets-v12',
-        center: center,
-        zoom: 12,
-        pitch: 45,
-        bearing: 0
-      });
+      // Verificar que el contenedor existe antes de crear el mapa
+      if (!mapContainer.current) {
+        console.warn('Map container not ready');
+        return;
+      }
 
-      // Configurar eventos del mapa
-      map.current!.on('load', () => {
-        setMapLoaded(true);
-        
-        // Añadir controles de navegación
-        map.current?.addControl(new mapboxgl.NavigationControl(), 'top-right');
-        
-        // Deshabilitar interacciones para que solo sea visual
-        map.current?.scrollZoom.disable();
-        map.current?.boxZoom.disable();
-        map.current?.dragRotate.disable();
-        map.current?.dragPan.disable();
-        map.current?.keyboard.disable();
-        map.current?.doubleClickZoom.disable();
-        map.current?.touchZoomRotate.disable();
-        
-        // Animación suave de rotación
-        const rotateCamera = () => {
-          if (!map.current) return;
+      // Limpiar mapa existente si existe
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+
+      try {
+        // Inicializar el mapa
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/satellite-streets-v12',
+          center: center,
+          zoom: 12,
+          pitch: 45,
+          bearing: 0
+        });
+
+        // Configurar eventos del mapa
+        map.current.on('load', () => {
+          setMapLoaded(true);
           
-          map.current.rotateTo(map.current.getBearing() + 0.2, {
-            duration: 1000,
-            easing: (t) => t
-          });
-        };
-        
-        // Rotación continua cada segundo
-        const rotationInterval = setInterval(rotateCamera, 1000);
-        
-        // Limpiar intervalo al desmontar
-        return () => {
-          clearInterval(rotationInterval);
-        };
-      });
+          // Añadir controles de navegación
+          if (map.current) {
+            map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+            
+            // Deshabilitar interacciones para que solo sea visual
+            map.current.scrollZoom.disable();
+            map.current.boxZoom.disable();
+            map.current.dragRotate.disable();
+            map.current.dragPan.disable();
+            map.current.keyboard.disable();
+            map.current.doubleClickZoom.disable();
+            map.current.touchZoomRotate.disable();
+            
+            // Animación suave de rotación
+            const rotateCamera = () => {
+              if (!map.current) return;
+              
+              map.current.rotateTo(map.current.getBearing() + 0.2, {
+                duration: 1000,
+                easing: (t) => t
+              });
+            };
+            
+            // Rotación continua cada segundo
+            const rotationInterval = setInterval(rotateCamera, 1000);
+            
+            // Limpiar intervalo al desmontar
+            return () => {
+              clearInterval(rotationInterval);
+            };
+          }
+        });
+
+        map.current.on('error', (e) => {
+          console.error('Mapbox error:', e);
+        });
+
+      } catch (error) {
+        console.error('Error initializing map:', error);
+      }
     }
 
     return () => {
-      map.current?.remove();
+      if (map.current) {
+        try {
+          map.current.remove();
+        } catch (error) {
+          console.warn('Error removing map:', error);
+        }
+        map.current = null;
+      }
     };
   }, [token]);
 
